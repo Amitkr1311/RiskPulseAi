@@ -1,0 +1,48 @@
+[
+  {
+    "name": "Corporate loan book",
+    "asset_type": "corporate_loan",
+    "market_value": "400000000.00",
+    "currency": "INR",
+    "sector": "diversified",
+    "borrower": "Synthetic corporate borrowers",
+    "valuation_parameters": {"basis": "exposure", "recovery_rate": 0.4}
+  },
+  {
+    "name": "Government bond book",
+    "asset_type": "government_bond",
+    "market_value": "250000000.00",
+    "currency": "INR",
+    "sector": "sovereign",
+    "borrower": "Government of India",
+    "valuation_parameters": {"basis": "market_value", "duration": 6.0}
+  },
+  {
+    "name": "Corporate bond book",
+    "asset_type": "corporate_bond",
+    "market_value": "200000000.00",
+    "currency": "INR",
+    "sector": "diversified",
+    "borrower": "Synthetic issuers",
+    "valuation_parameters": {"basis": "market_value", "duration": 4.0}
+  },
+  {
+    "name": "Equity book",
+    "asset_type": "equity",
+    "market_value": "100000000.00",
+    "currency": "INR",
+    "sector": "diversified",
+    "borrower": null,
+    "valuation_parameters": {"basis": "market_value", "beta": 1.0}
+  },
+  {
+    "name": "Derivative exposure",
+    "asset_type": "derivative",
+    "market_value": "50000000.00",
+    "currency": "INR",
+    "sector": "diversified",
+    "borrower": null,
+    "valuation_parameters": {"basis": "simplified_exposure", "sensitivity": 1.0}
+  }
+]
+

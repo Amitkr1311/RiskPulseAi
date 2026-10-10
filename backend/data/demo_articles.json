@@ -1,0 +1,21 @@
+[
+  {
+    "source": "news",
+    "external_id": "demo-news-001",
+    "title": "Synthetic banking sector outlook remains under review",
+    "text": "This deterministic fixture represents a financial-news article for a later ingestion milestone.",
+    "url": "https://example.invalid/riskpulse/demo-news-001",
+    "published_at": "2026-01-15T09:00:00Z",
+    "is_demo": true
+  },
+  {
+    "source": "reddit",
+    "external_id": "demo-social-001",
+    "title": "Synthetic market discussion fixture",
+    "text": "This deterministic fixture represents a social-media post for a later ingestion milestone.",
+    "url": "https://example.invalid/riskpulse/demo-social-001",
+    "published_at": "2026-01-15T10:00:00Z",
+    "is_demo": true
+  }
+]
+

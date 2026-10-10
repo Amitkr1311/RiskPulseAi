@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: riskpulse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: riskpulse
+      POSTGRES_USER: riskpulse
+      POSTGRES_PASSWORD: riskpulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - riskpulse-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U riskpulse -d riskpulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  riskpulse-postgres-data:
+
