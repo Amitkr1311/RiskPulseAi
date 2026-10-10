@@ -10,13 +10,21 @@ SEVERITY = {
     "product_launch": 0.35,
     "market_crash": 1.00,
     "company_performance": 0.50,
+    "liquidity_stress": 0.90,
+    "cyber_incident": 0.80,
+    "fraud_misconduct": 0.80,
+    "litigation": 0.60,
+    "operational_disruption": 0.70,
+    "climate_risk": 0.70,
+    "sovereign_risk": 0.85,
+    "currency_shock": 0.75,
     "other": 0.15,
 }
 SOURCE_RELIABILITY = {"news": 0.80, "reddit": 0.45, "demo": 0.60}
 
 
 class ImpactScorer:
-    version = "impact-v1"
+    version = "impact-v2"
 
     def score(self, source: str, event: EventResult, sentiment: SentimentResult) -> ImpactResult:
         severity = SEVERITY.get(event.event_type, SEVERITY["other"])

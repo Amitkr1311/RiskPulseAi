@@ -20,7 +20,11 @@ class RedditAdapter:
 
     @property
     def configured(self) -> bool:
-        return bool(self.settings.reddit_access_token and self.settings.reddit_subreddits)
+        return bool(
+            self.settings.reddit_ingestion_enabled
+            and self.settings.reddit_access_token
+            and self.settings.reddit_subreddits
+        )
 
     def fetch(self, limit: int) -> list[Mapping[str, object]]:
         if not self.configured:

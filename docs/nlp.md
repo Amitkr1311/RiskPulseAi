@@ -20,7 +20,9 @@ The official model card documents the model and output labels but does not decla
 
 ## Entities and events
 
-Entity extraction is deliberately conservative. Known aliases are in `backend/data/entity_aliases.json`; an unknown organization-shaped mention is preserved with `resolved=false` and no invented ticker or identifier. Event categories are `geopolitical`, `macroeconomic`, `credit_event`, `merger_acquisition`, `earnings`, `regulatory`, `product_launch`, `market_crash`, `company_performance`, and `other`. Event confidence is rule evidence, not a calibrated model probability.
+Entity extraction is alias-driven and intentionally does not invent identifiers. Known aliases are in `backend/data/entity_aliases.json`; the taxonomy supports organizations, central banks, governments, countries, sectors, commodities, currencies, indexes, instruments, and people. Unknown organization-shaped mentions are preserved with `resolved=false` and no invented ticker or identifier.
+
+Detailed event types include `geopolitical`, `macroeconomic`, `credit_event`, `merger_acquisition`, `earnings`, `regulatory`, `product_launch`, `market_crash`, `company_performance`, `liquidity_stress`, `cyber_incident`, `fraud_misconduct`, `litigation`, `operational_disruption`, `climate_risk`, `sovereign_risk`, `currency_shock`, and `other`. Each detailed type also belongs to a broader event group: `market_macro`, `credit_financial`, `corporate_actions`, `regulatory_legal`, `operational_technology`, `climate_esg`, or `other`. Event confidence is rule evidence, not a calibrated model probability.
 
 ## Impact score
 
@@ -41,6 +43,8 @@ python -m app.nlp.process --article-id 1
 - `POST /nlp/process-pending` with `{"limit":25}`
 - `POST /nlp/process/{article_id}`
 - `GET /signals?event_type=credit_event&impact_min=5`
+- `GET /signals?event_group=credit_financial&impact_min=5`
+- `GET /signals/taxonomy`
 - `GET /signals/{signal_id}`
 
 Processing states are `pending`, `processing`, `processed`, and `failed`. Failures retain the original article and sanitized error code for retry. A unique article constraint and existing-signal check prevent duplicate signals.

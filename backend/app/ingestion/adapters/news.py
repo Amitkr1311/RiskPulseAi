@@ -2,6 +2,7 @@ import html
 import logging
 import xml.etree.ElementTree as ET
 from collections.abc import Mapping
+from html.parser import HTMLParser
 
 import httpx
 
@@ -13,6 +14,15 @@ from app.ingestion.normalization import NormalizedArticle, normalize_whitespace
 logger = logging.getLogger("riskpulse.ingestion.news")
 
 
+class _FeedTextParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+
 def _local_name(tag: str) -> str:
     return tag.rsplit("}", 1)[-1].lower()
 
@@ -20,8 +30,10 @@ def _local_name(tag: str) -> str:
 def _clean_feed_text(value: object) -> str | None:
     if not isinstance(value, str):
         return None
-    unescaped = html.unescape(value)
-    cleaned = normalize_whitespace(unescaped)
+    parser = _FeedTextParser()
+    parser.feed(html.unescape(value))
+    parser.close()
+    cleaned = normalize_whitespace(" ".join(parser.parts))
     return cleaned or None
 
 
@@ -99,4 +111,3 @@ class NewsRssAdapter:
             raise
         except Exception as exc:
             raise ProviderValidationError("financial news record is malformed") from exc
-

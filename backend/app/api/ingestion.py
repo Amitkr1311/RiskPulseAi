@@ -69,14 +69,21 @@ def ingestion_status(
     source_statuses = [
         SourceStatus(
             source=source,
-            configured=adapter.configured,
-            last_run=_run_read(latest_by_source[source]) if source in latest_by_source else None,
+            enabled=source != "reddit" or settings.reddit_ingestion_enabled,
+            configured=(source != "reddit" or settings.reddit_ingestion_enabled) and adapter.configured,
+            last_run=(
+                _run_read(latest_by_source[source])
+                if (source != "reddit" or settings.reddit_ingestion_enabled) and source in latest_by_source
+                else None
+            ),
         )
         for source, adapter in adapters.items()
     ]
     return IngestionStatusResponse(
         sources=source_statuses,
         recent_runs=[_run_read(run) for run in recent],
+        live_enabled=settings.ingestion_live_enabled,
+        poll_interval_seconds=settings.ingestion_poll_interval_seconds,
     )
 
 
@@ -121,4 +128,3 @@ def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
-

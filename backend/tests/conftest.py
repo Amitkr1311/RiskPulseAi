@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import Settings, get_settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
@@ -31,7 +32,14 @@ def client(db_session: Session) -> TestClient:
     def override_get_db():
         yield db_session
 
+    test_settings = Settings(
+        news_rss_url=None,
+        reddit_access_token=None,
+        ingestion_api_key=None,
+        ingestion_live_enabled=False,
+    )
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_settings] = lambda: test_settings
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

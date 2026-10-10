@@ -29,6 +29,7 @@ class RiskSignalRead(BaseModel):
     sentiment_score: float
     sentiment_probabilities: dict[str, float] | None
     event_type: str
+    event_group: str
     event_confidence: float | None = Field(default=None, ge=0, le=1)
     impact_score: int = Field(ge=1, le=10)
     impact_factors: dict[str, Any] | None
@@ -58,6 +59,12 @@ class SignalPage(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class SignalTaxonomy(BaseModel):
+    event_groups: dict[str, list[str]]
+    event_types: list[str]
+    entity_types: list[str]
 
 
 class ProcessRequest(BaseModel):

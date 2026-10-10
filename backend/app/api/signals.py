@@ -6,9 +6,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db.models import Article, ArticleEntity, RiskSignal
+from app.nlp.entities import ENTITY_TYPES
+from app.nlp.events import EVENT_GROUPS, EVENT_TYPES, event_group_for_type
 from app.db.session import get_db
 from app.schemas.articles import ArticleRead
-from app.schemas.signals import EntitySignalRead, RiskSignalRead, SignalPage
+from app.schemas.signals import EntitySignalRead, RiskSignalRead, SignalPage, SignalTaxonomy
 from app.services.api_queries import QueryRangeError, count_query, signal_query, validate_range
 
 router = APIRouter(prefix="/signals", tags=["signals"])
@@ -48,6 +50,7 @@ def _as_read(signal: RiskSignal) -> RiskSignalRead:
             else None
         ),
         event_type=signal.event_type,
+        event_group=event_group_for_type(signal.event_type),
         event_confidence=float(signal.event_confidence) if signal.event_confidence is not None else None,
         impact_score=signal.impact_score,
         impact_factors=signal.impact_factors,
@@ -69,6 +72,7 @@ def list_signals(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0, le=100_000),
     event_type: str | None = Query(default=None, min_length=1, max_length=64),
+    event_group: str | None = Query(default=None, min_length=1, max_length=64),
     source: str | None = Query(default=None, min_length=1, max_length=32),
     entity: str | None = Query(default=None, min_length=1, max_length=255),
     sentiment_label: str | None = Query(default=None, min_length=1, max_length=16),
@@ -85,6 +89,7 @@ def list_signals(
 ) -> SignalPage:
     _validate_signal_filters(
         event_type,
+        event_group,
         sentiment_label,
         sentiment_min,
         sentiment_max,
@@ -101,6 +106,7 @@ def list_signals(
         offset=offset,
         entity=entity,
         event_type=event_type,
+        event_group=event_group,
         impact_min=impact_min,
         impact_max=impact_max,
         sentiment_label=sentiment_label,
@@ -112,6 +118,20 @@ def list_signals(
         published_to=published_to,
         created_from=created_from,
         created_to=created_to,
+    )
+
+
+@router.get(
+    "/taxonomy",
+    response_model=SignalTaxonomy,
+    summary="Get supported signal taxonomy",
+    description="Returns the broad event groups, detailed event types, and entity types used by the NLP pipeline.",
+)
+def signal_taxonomy() -> SignalTaxonomy:
+    return SignalTaxonomy(
+        event_groups={key: list(values) for key, values in EVENT_GROUPS.items()},
+        event_types=list(EVENT_TYPES),
+        entity_types=list(ENTITY_TYPES),
     )
 
 
@@ -155,6 +175,7 @@ def _signal_page(db: Session, *, limit: int, offset: int, **filters: Any) -> Sig
 
 def _validate_signal_filters(
     event_type: str | None,
+    event_group: str | None,
     sentiment_label: str | None,
     sentiment_min: float | None,
     sentiment_max: float | None,
@@ -167,6 +188,8 @@ def _validate_signal_filters(
 ) -> None:
     if event_type is not None and not event_type.strip():
         raise HTTPException(status_code=422, detail="event_type must not be blank")
+    if event_group is not None and event_group.strip().casefold() not in EVENT_GROUPS:
+        raise HTTPException(status_code=422, detail="event_group is not supported")
     if sentiment_label is not None and sentiment_label.strip().casefold() not in SENTIMENT_LABELS:
         raise HTTPException(status_code=422, detail="sentiment_label must be positive, negative, or neutral")
     if sentiment_min is not None and sentiment_max is not None and sentiment_min > sentiment_max:

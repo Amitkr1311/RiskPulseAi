@@ -1,3 +1,4 @@
+import hashlib
 from datetime import UTC
 
 import httpx
@@ -13,7 +14,7 @@ NEWS_XML = b"""
 <rss><channel><item>
   <guid>news-1</guid>
   <title>  Earnings update  </title>
-  <description>  Revenue increased.  </description>
+  <description><![CDATA[<p>Revenue increased.</p><a href="https://example.test/read-more">Read more</a>]]></description>
   <link>https://example.test/news-1</link>
   <pubDate>Mon, 19 Jan 2026 10:00:00 GMT</pubDate>
 </item></channel></rss>
@@ -41,6 +42,22 @@ def test_news_record_normalizes_content_and_timestamp():
     assert article.is_demo is False
 
 
+def test_news_normalizes_overlong_external_ids_deterministically():
+    adapter = NewsRssAdapter(Settings(news_rss_url="https://example.test/feed"))
+    long_external_id = "google-news-id-" + ("x" * 500)
+
+    article = adapter.normalize(
+        {
+            "external_id": long_external_id,
+            "title": "Long identifier",
+            "text": "A valid article body.",
+        }
+    )
+
+    assert article.external_id == "sha256:" + hashlib.sha256(long_external_id.encode()).hexdigest()
+    assert len(article.external_id) == 71
+
+
 def test_news_adapter_parses_rss_with_mocked_http():
     transport = httpx.MockTransport(lambda request: httpx.Response(200, content=NEWS_XML, request=request))
     settings = Settings(news_rss_url="https://example.test/feed")
@@ -50,10 +67,11 @@ def test_news_adapter_parses_rss_with_mocked_http():
     assert len(records) == 1
     assert records[0]["external_id"] == "news-1"
     assert records[0]["title"] == "Earnings update"
+    assert records[0]["text"] == "Revenue increased. Read more"
 
 
 def test_reddit_record_normalizes_same_contract():
-    adapter = RedditAdapter(Settings(reddit_access_token="token"))
+    adapter = RedditAdapter(Settings(reddit_ingestion_enabled=True, reddit_access_token="token"))
 
     article = adapter.normalize(
         {
@@ -88,7 +106,7 @@ def test_reddit_adapter_parses_api_response_with_mocked_http():
         }
     }
     transport = httpx.MockTransport(lambda request: httpx.Response(200, json=payload, request=request))
-    settings = Settings(reddit_access_token="token", reddit_subreddits=["finance"])
+    settings = Settings(reddit_ingestion_enabled=True, reddit_access_token="token", reddit_subreddits=["finance"])
     with httpx.Client(transport=transport) as client:
         records = RedditAdapter(settings, client).fetch(limit=10)
 
@@ -106,8 +124,14 @@ def test_missing_or_malformed_fields_are_rejected():
 
 
 def test_missing_reddit_credentials_are_reported_without_network_access():
-    adapter = RedditAdapter(Settings(reddit_access_token=None))
+    adapter = RedditAdapter(Settings(reddit_ingestion_enabled=True, reddit_access_token=None))
 
     with pytest.raises(ProviderNotConfiguredError):
         adapter.fetch(limit=10)
 
+
+def test_reddit_is_disabled_without_explicit_opt_in():
+    adapter = RedditAdapter(Settings(reddit_access_token="token"))
+
+    with pytest.raises(ProviderNotConfiguredError):
+        adapter.fetch(limit=10)

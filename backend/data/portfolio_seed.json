@@ -1,48 +1,92 @@
 [
   {
+    "position_key": "corporate_loans",
     "name": "Corporate loan book",
     "asset_type": "corporate_loan",
     "market_value": "400000000.00",
     "currency": "INR",
     "sector": "diversified",
     "borrower": "Synthetic corporate borrowers",
-    "valuation_parameters": {"basis": "exposure", "recovery_rate": 0.4}
+    "valuation_parameters": {
+      "basis": "exposure",
+      "borrower_group_id": "synthetic-borrower-group",
+      "sector": "diversified",
+      "pd": "0.025",
+      "lgd": "0.60",
+      "recovery_rate": "0.40",
+      "remaining_tenor_years": "3.0"
+    }
   },
   {
+    "position_key": "government_bonds",
     "name": "Government bond book",
     "asset_type": "government_bond",
     "market_value": "250000000.00",
     "currency": "INR",
     "sector": "sovereign",
     "borrower": "Government of India",
-    "valuation_parameters": {"basis": "market_value", "duration": 6.0}
+    "valuation_parameters": {
+      "basis": "market_value",
+      "issuer": "Government of India",
+      "maturity_year": 2032,
+      "modified_duration": "6.0",
+      "convexity": "42.0",
+      "baseline_yield": "0.0715",
+      "yield_unit": "decimal_rate"
+    }
   },
   {
+    "position_key": "corporate_bonds",
     "name": "Corporate bond book",
     "asset_type": "corporate_bond",
     "market_value": "200000000.00",
     "currency": "INR",
     "sector": "diversified",
     "borrower": "Synthetic issuers",
-    "valuation_parameters": {"basis": "market_value", "duration": 4.0}
+    "valuation_parameters": {
+      "basis": "market_value",
+      "issuer": "Synthetic Investment Grade Issuer",
+      "sector": "diversified",
+      "credit_rating": "AA",
+      "modified_duration": "4.0",
+      "convexity": "22.0",
+      "credit_spread_duration": "3.5",
+      "baseline_credit_spread": "0.0180",
+      "spread_unit": "decimal_rate"
+    }
   },
   {
+    "position_key": "equities",
     "name": "Equity book",
     "asset_type": "equity",
     "market_value": "100000000.00",
     "currency": "INR",
-    "sector": "diversified",
+    "sector": "financials",
     "borrower": null,
-    "valuation_parameters": {"basis": "market_value", "beta": 1.0}
+    "valuation_parameters": {
+      "basis": "market_value",
+      "ticker": "SYNBANK",
+      "instrument_name": "Synthetic Banking Equity Basket",
+      "sector": "financials",
+      "beta": "1.10",
+      "market_reference": "synthetic broad market index"
+    }
   },
   {
-    "name": "Derivative exposure",
+    "position_key": "derivatives",
+    "name": "Derivative marked-to-market book",
     "asset_type": "derivative",
     "market_value": "50000000.00",
     "currency": "INR",
-    "sector": "diversified",
+    "sector": "financials",
     "borrower": null,
-    "valuation_parameters": {"basis": "simplified_exposure", "sensitivity": 1.0}
+    "valuation_parameters": {
+      "basis": "simplified_mark_to_market",
+      "instrument_type": "index_total_return_swap",
+      "underlying": "SYNBANK",
+      "notional_exposure_inr": "100000000.00",
+      "delta_equivalent": "0.50",
+      "market_value_definition": "simplified_mark_to_market_portfolio_value"
+    }
   }
 ]
-

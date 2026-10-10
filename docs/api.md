@@ -1,6 +1,6 @@
 # RiskPulse AI ingestion API
 
-Milestone 2 exposes only the ingestion and article endpoints needed to verify normalized persistence. It does not expose NLP signals or stress-testing endpoints yet.
+This document covers the ingestion, NLP, portfolio, and Milestone 6 stress-testing endpoints.
 
 ## `GET /articles`
 
@@ -44,7 +44,8 @@ If `INGESTION_API_KEY` is configured, add `X-Ingestion-Key` to both POST request
 - `GET /nlp/status`: configured sentiment backend, model availability, article processing counts, and signal count.
 - `POST /nlp/process-pending`: process a bounded batch. Body is optional; use `{"limit":25}` with a maximum of 100.
 - `POST /nlp/process/{article_id}`: process one article and return `processed`, `skipped`, or `failed`.
-- `GET /signals`: paginated persisted signals. Filters include `event_type`, `source`, `entity`, `impact_min`, `impact_max`, `created_from`, and `created_to`.
+- `GET /signals`: paginated persisted signals. Filters include detailed `event_type`, broad `event_group`, `source`, `entity`, `impact_min`, `impact_max`, `created_from`, and `created_to`.
+- `GET /signals/taxonomy`: returns supported event groups, event types, and entity types for filter clients.
 - `GET /signals/{signal_id}`: one signal with article source, entity mentions, sentiment probabilities, event confidence, impact factor breakdown, rationale, and model metadata.
 
 NLP processing endpoints are bounded local/demo controls, not production authentication or rate limiting. The default backend is deterministic `heuristic`; optional FinBERT setup and its licensing limitation are documented in [`docs/nlp.md`](nlp.md).
@@ -64,3 +65,40 @@ Example frontend request:
 const response = await fetch(`${apiUrl}/signals?limit=20&impact_min=7&is_demo=false`);
 const page = await response.json(); // { items, total, limit, offset }
 ```
+
+## Milestone 5 portfolio foundation
+
+- `GET /portfolio`: demo portfolio metadata, position count, and exact Decimal totals in INR and crore.
+- `GET /portfolio/positions`: paginated positions. Optional `asset_class` and `sector` filters are validated against the supported asset classes.
+- `GET /portfolio/positions/{position_id}`: one position, its market value, contribution, sector, and validated asset-specific parameters.
+- `GET /portfolio/summary`: base valuation totals, asset-class allocation, sector allocation, and position contribution. No stress calculation is performed.
+
+Example requests:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/portfolio
+Invoke-RestMethod 'http://localhost:8000/portfolio/positions?asset_class=equity'
+Invoke-RestMethod http://localhost:8000/portfolio/summary
+```
+
+Portfolio money fields are explicit: `market_value_inr` is canonical and `market_value_crore` is derived using `₹1 crore = ₹10,000,000`. See [`portfolio.md`](portfolio.md) for the deterministic seed and parameter units, and [`stress_testing.md`](stress_testing.md) for stress formulas and audit behavior.
+
+## Live RSS and Reddit integration
+
+Live polling is optional and disabled by default. Reddit ingestion is separately opt-in. Configure the provider credentials in the backend/root `.env` file, then enable the in-process poller:
+
+```env
+NEWS_RSS_URL=https://your-permitted-provider.example/feed.xml
+REDDIT_INGESTION_ENABLED=false
+REDDIT_ACCESS_TOKEN=your_oauth_access_token
+REDDIT_SUBREDDITS=["finance","investing"]
+REDDIT_SEARCH_TERMS=["banking","credit risk","interest rates"]
+INGESTION_LIVE_ENABLED=true
+INGESTION_LIVE_SOURCES=["news","reddit"]
+INGESTION_LIVE_PROCESS_NLP=true
+INGESTION_POLL_INTERVAL_SECONDS=300
+```
+
+Set `REDDIT_INGESTION_ENABLED=true` only when a valid Reddit OAuth access token is available; the token must be a raw bearer token, not a client ID or client secret. Restart the backend after changing environment variables. The scheduler polls configured sources, deduplicates and persists new articles, then processes pending articles through the configured NLP backend. The frontend reads `/ingestion/status`, `/articles`, `/nlp/status`, and `/signals` every 15 seconds; provider credentials never go to the browser.
+
+For a multi-worker production deployment, run one dedicated scheduler/worker rather than enabling the in-process poller in every API worker, otherwise each worker may poll the providers.

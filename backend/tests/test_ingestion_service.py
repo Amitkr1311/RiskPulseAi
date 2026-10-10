@@ -120,4 +120,3 @@ def test_demo_fixtures_are_repeatable_and_marked_as_demo(db_session):
     assert all(article.is_demo for article in articles)
     assert {article.source for article in articles} == {"news", "reddit"}
     assert db_session.scalar(select(func.count(IngestionRun.id))) == 2
-

@@ -89,18 +89,49 @@ class RiskSignal(Base):
     stress_runs: Mapped[list["StressTestRun"]] = relationship(back_populates="trigger_signal")
 
 
-class PortfolioPosition(Base):
-    __tablename__ = "portfolio_positions"
+class Portfolio(Base):
+    __tablename__ = "portfolios"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    portfolio_key: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    asset_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
+    description: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    positions: Mapped[list["PortfolioPosition"]] = relationship(
+        back_populates="portfolio", cascade="all, delete-orphan"
+    )
+    stress_runs: Mapped[list["StressTestRun"]] = relationship(back_populates="portfolio")
+
+
+class PortfolioPosition(Base):
+    __tablename__ = "portfolio_positions"
+    __table_args__ = (UniqueConstraint("portfolio_id", "position_key", name="uq_portfolio_positions_portfolio_key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    position_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    asset_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     market_value: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")
-    sector: Mapped[str | None] = mapped_column(String(128))
+    sector: Mapped[str | None] = mapped_column(String(128), index=True)
     borrower: Mapped[str | None] = mapped_column(String(255))
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     valuation_parameters: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
+    portfolio: Mapped[Portfolio] = relationship(back_populates="positions")
     results: Mapped[list["StressTestResult"]] = relationship(back_populates="position")
 
 
@@ -108,6 +139,7 @@ class StressScenario(Base):
     __tablename__ = "stress_scenarios"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    scenario_key: Mapped[str | None] = mapped_column(String(64), unique=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     event_category: Mapped[str] = mapped_column(String(64), nullable=False)
     trigger_threshold: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -124,15 +156,26 @@ class StressTestRun(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     trigger_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    portfolio_id: Mapped[int | None] = mapped_column(ForeignKey("portfolios.id", ondelete="SET NULL"), index=True)
     trigger_signal_id: Mapped[int | None] = mapped_column(ForeignKey("risk_signals.id", ondelete="SET NULL"))
     scenario_id: Mapped[int] = mapped_column(ForeignKey("stress_scenarios.id"), nullable=False)
     portfolio_value_before: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     portfolio_value_after: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     loss_percentage: Mapped[Decimal] = mapped_column(Numeric(8, 4), nullable=False)
+    portfolio_return_percentage: Mapped[Decimal] = mapped_column(Numeric(8, 4), nullable=False, default=0)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="completed")
+    trigger_mode: Mapped[str] = mapped_column(String(32), nullable=False, default="manual")
+    scenario_version: Mapped[str] = mapped_column(String(32), nullable=False, default="1.0")
+    model_version: Mapped[str] = mapped_column(String(64), nullable=False, default="stress-v1")
+    scenario_parameters: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    input_snapshot: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    data_provenance: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    validation_warnings: Mapped[list[str] | None] = mapped_column(JSON)
+    reconciliation_tolerance: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=Decimal("0.01"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+    portfolio: Mapped[Portfolio | None] = relationship(back_populates="stress_runs")
     trigger_signal: Mapped[RiskSignal | None] = relationship(back_populates="stress_runs")
     scenario: Mapped[StressScenario] = relationship(back_populates="runs")
     results: Mapped[list["StressTestResult"]] = relationship(back_populates="run", cascade="all, delete-orphan")
@@ -147,6 +190,12 @@ class StressTestResult(Base):
     position_value_before: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     position_value_after: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     contribution: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    position_key_snapshot: Mapped[str | None] = mapped_column(String(64))
+    position_name_snapshot: Mapped[str | None] = mapped_column(String(255))
+    asset_type_snapshot: Mapped[str | None] = mapped_column(String(64))
+    inclusion_status: Mapped[str] = mapped_column(String(32), nullable=False, default="included")
+    calculation_method: Mapped[str | None] = mapped_column(String(128))
+    explanation: Mapped[str | None] = mapped_column(Text)
     calculation_details: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
 
     run: Mapped[StressTestRun] = relationship(back_populates="results")

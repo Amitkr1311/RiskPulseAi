@@ -1,6 +1,6 @@
 # RiskPulse AI
 
-RiskPulse AI is an AI-powered financial risk intelligence and synthetic portfolio stress-testing prototype. The repository contains Milestones 1–3: project foundation, data ingestion, and the traceable article-to-risk-signal NLP pipeline.
+RiskPulse AI is an AI-powered financial risk intelligence and synthetic portfolio stress-testing prototype. The repository contains Milestones 1–5: project foundation, data ingestion, the traceable article-to-risk-signal NLP pipeline, API integration, and the synthetic portfolio foundation.
 
 The project specification is [`docx/RiskPulse_AI_Project_Specification.md`](docx/RiskPulse_AI_Project_Specification.md) and is authoritative for architecture, scope, and milestone acceptance criteria.
 
@@ -34,11 +34,13 @@ npm install
 npm run dev
 ```
 
+To enable optional live RSS/Reddit polling, set `NEWS_RSS_URL` and the `INGESTION_LIVE_*` variables in `.env`. Reddit additionally requires `REDDIT_INGESTION_ENABLED=true` and a valid OAuth access token. Restart the backend after changing environment variables. The frontend automatically refreshes live-feed status, recent articles, NLP status, and signals every 15 seconds. Provider credentials remain backend-only. See [`docs/api.md`](docs/api.md#live-rss-and-reddit-integration).
+
 Open <http://localhost:3000> for the status/NLP view and <http://localhost:8000/docs> for the API documentation.
 
 ## Ingestion and NLP demo
 
-Live ingestion remains opt-in. Configure `NEWS_RSS_URL` and/or the Reddit OAuth variables only for sources you are allowed to access. `INGESTION_API_KEY` is optional for local/demo triggering; it is not production authentication.
+Live ingestion remains opt-in. Configure `NEWS_RSS_URL` and/or the Reddit OAuth variables only for sources you are allowed to access. Reddit is disabled unless `REDDIT_INGESTION_ENABLED=true`. `INGESTION_API_KEY` is optional for local/demo triggering; it is not production authentication.
 
 Load deterministic demo articles and process them:
 
@@ -58,8 +60,10 @@ The same processing is available from the backend with `python -m app.nlp.proces
 - `GET /nlp/status`, `POST /nlp/process-pending`, `POST /nlp/process/{article_id}`
 - `GET /signals`, `GET /signals/latest`, `GET /signals/{signal_id}`
 - `GET /dashboard/summary`
+- `GET /portfolio`, `GET /portfolio/positions`, `GET /portfolio/positions/{position_id}`, `GET /portfolio/summary`
+- `GET /stress-testing/scenarios`, `POST /stress-testing/run`, `GET /stress-testing/runs`, `GET /stress-testing/runs/{simulation_id}`
 
-Collection responses use `{items, total, limit, offset}`. Articles support `source`, `processing_status`, `published_from`, `published_to`, and `search`. Signals support entity, event, sentiment, impact, source, demo/live, publication, and signal-creation filters. Signal details include the original nested article. See [`docs/api.md`](docs/api.md) for request examples and validation behavior.
+Collection responses use `{items, total, limit, offset}`. Articles support `source`, `processing_status`, `published_from`, `published_to`, and `search`. Signals support entity, event, sentiment, impact, source, demo/live, publication, and signal-creation filters. Signal details include the original nested article. Portfolio responses use exact INR values plus derived crore values and provide base valuation only. See [`docs/api.md`](docs/api.md) and [`docs/portfolio.md`](docs/portfolio.md) for request examples, formulas, and validation behavior.
 
 ## Verification commands
 
@@ -85,6 +89,6 @@ Tests use deterministic fixtures and mocked provider/model boundaries; they do n
 
 ## Scope boundaries
 
-Milestone 4 adds the API integration layer only. It does not include portfolio valuation, stress-testing calculations, or the complete dashboard. The next implementation step after this milestone is Portfolio Stress Testing.
+Milestone 5 adds the synthetic portfolio foundation, deterministic seed, base valuation endpoints, and scenario templates. It does not include stress-testing calculations, event triggers, signal mapping, or the complete dashboard.
 
-Milestone 3 does not include a portfolio-aware score, ingestion scheduler, multilingual analysis, production entity master, trained event classifier, stress-testing calculations, or the complete dashboard. The recommended next step is Milestone 4 — Portfolio Stress Testing.
+Milestone 6 adds deterministic scenario execution, signal eligibility, portfolio relevance, persisted audit snapshots, idempotent runs, and position-level reconciliation. Automatic ingestion-to-stress background triggering and the complete dashboard remain later integration scope.

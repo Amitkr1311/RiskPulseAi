@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 from app.nlp.contracts import EntityMention
+from app.nlp.events import ENTITY_TYPES
 
 
 DEFAULT_ENTITY_ALIASES = [
@@ -15,7 +16,28 @@ DEFAULT_ENTITY_ALIASES = [
         "entity_type": "organization",
     },
     {"canonical_name": "Federal Reserve", "aliases": ["Federal Reserve", "Fed"], "entity_type": "organization"},
-    {"canonical_name": "Government of India", "aliases": ["Government of India"], "entity_type": "organization"},
+    {"canonical_name": "Government of India", "aliases": ["Government of India"], "entity_type": "government"},
+    {"canonical_name": "JPMorgan Chase", "aliases": ["JPMorgan", "JPMorgan Chase", "JP Morgan"], "entity_type": "organization"},
+    {"canonical_name": "Goldman Sachs", "aliases": ["Goldman Sachs", "Goldman"], "entity_type": "organization"},
+    {"canonical_name": "State Bank of India", "aliases": ["State Bank of India", "SBI"], "entity_type": "organization"},
+    {"canonical_name": "HDFC Bank", "aliases": ["HDFC Bank", "HDFC"], "entity_type": "organization"},
+    {"canonical_name": "ICICI Bank", "aliases": ["ICICI Bank", "ICICI"], "entity_type": "organization"},
+    {"canonical_name": "European Central Bank", "aliases": ["European Central Bank", "ECB"], "entity_type": "central_bank"},
+    {"canonical_name": "Bank of England", "aliases": ["Bank of England", "BoE"], "entity_type": "central_bank"},
+    {"canonical_name": "Bank of Japan", "aliases": ["Bank of Japan", "BoJ"], "entity_type": "central_bank"},
+    {"canonical_name": "United States", "aliases": ["United States", "U.S."], "entity_type": "country"},
+    {"canonical_name": "China", "aliases": ["China", "Chinese government"], "entity_type": "country"},
+    {"canonical_name": "United Kingdom", "aliases": ["United Kingdom", "U.K."], "entity_type": "country"},
+    {"canonical_name": "Banking", "aliases": ["banking sector", "banking industry"], "entity_type": "sector"},
+    {"canonical_name": "Technology", "aliases": ["technology sector", "tech sector"], "entity_type": "sector"},
+    {"canonical_name": "Energy", "aliases": ["energy sector", "energy industry"], "entity_type": "sector"},
+    {"canonical_name": "Crude Oil", "aliases": ["crude oil", "Brent crude", "WTI"], "entity_type": "commodity"},
+    {"canonical_name": "Gold", "aliases": ["gold prices", "gold"], "entity_type": "commodity"},
+    {"canonical_name": "US Dollar", "aliases": ["US dollar", "U.S. dollar", "dollar"], "entity_type": "currency"},
+    {"canonical_name": "Indian Rupee", "aliases": ["Indian rupee", "rupee", "INR"], "entity_type": "currency"},
+    {"canonical_name": "S&P 500", "aliases": ["S&P 500", "S and P 500"], "entity_type": "index"},
+    {"canonical_name": "Nifty 50", "aliases": ["Nifty 50", "Nifty"], "entity_type": "index"},
+    {"canonical_name": "Nasdaq", "aliases": ["Nasdaq", "NASDAQ"], "entity_type": "index"},
 ]
 
 
@@ -56,10 +78,15 @@ class AliasEntityExtractor:
                         (
                             re.compile(rf"(?<!\w){re.escape(alias_text)}(?!\w)", re.IGNORECASE),
                             canonical,
-                            str(item.get("entity_type", "organization")),
+                            self._entity_type(item.get("entity_type", "organization")),
                         )
                     )
         self._patterns.sort(key=lambda item: len(item[0].pattern), reverse=True)
+
+    @staticmethod
+    def _entity_type(value: object) -> str:
+        entity_type = str(value).strip().casefold()
+        return entity_type if entity_type in ENTITY_TYPES else "organization"
 
     def extract(self, text: str) -> tuple[EntityMention, ...]:
         matches: list[tuple[int, int, EntityMention]] = []

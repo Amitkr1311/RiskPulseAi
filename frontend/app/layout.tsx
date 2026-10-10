@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
+import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RiskPulse AI | Foundation",
-  description: "RiskPulse AI service status and foundation environment.",
+  title: "RiskPulse AI | Risk Intelligence",
+  description: "Institutional financial risk intelligence and portfolio analysis.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><AppShell>{children}</AppShell></body>
     </html>
   );
 }
-

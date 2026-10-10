@@ -57,6 +57,7 @@ class FinBertSentimentAnalyzer:
         if importlib.util.find_spec("transformers") is None:
             raise SentimentInferenceError("FinBERT requires the optional 'transformers' package")
         try:
+            # pyrefly: ignore [missing-import]
             from transformers import pipeline
 
             kwargs: dict[str, object] = {"task": "text-classification", "model": model_id, "device": device}

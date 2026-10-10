@@ -45,6 +45,7 @@ class IngestionRunRead(BaseModel):
 
 class SourceStatus(BaseModel):
     source: str
+    enabled: bool
     configured: bool
     last_run: IngestionRunRead | None = None
 
@@ -52,4 +53,5 @@ class SourceStatus(BaseModel):
 class IngestionStatusResponse(BaseModel):
     sources: list[SourceStatus]
     recent_runs: list[IngestionRunRead]
-
+    live_enabled: bool
+    poll_interval_seconds: int

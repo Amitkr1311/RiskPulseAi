@@ -47,6 +47,7 @@ def signal_query(
     *,
     entity: str | None = None,
     event_type: str | None = None,
+    event_group: str | None = None,
     impact_min: int | None = None,
     impact_max: int | None = None,
     sentiment_label: str | None = None,
@@ -72,6 +73,12 @@ def signal_query(
         filters.append(or_(RiskSignal.entity_name.ilike(pattern), entity_match))
     if event_type:
         filters.append(RiskSignal.event_type == event_type.strip().casefold())
+    if event_group:
+        from app.nlp.events import event_types_for_group
+
+        event_types = event_types_for_group(event_group.strip())
+        if event_types:
+            filters.append(RiskSignal.event_type.in_(event_types))
     if impact_min is not None:
         filters.append(RiskSignal.impact_score >= impact_min)
     if impact_max is not None:

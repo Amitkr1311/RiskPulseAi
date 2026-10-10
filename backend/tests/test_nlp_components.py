@@ -1,7 +1,7 @@
 import pytest
 
 from app.nlp.entities import AliasEntityExtractor
-from app.nlp.events import RuleBasedEventClassifier
+from app.nlp.events import RuleBasedEventClassifier, event_group_for_type
 from app.nlp.impact import ImpactScorer
 from app.nlp.preprocessing import TextProcessingError, preprocess_text
 from app.nlp.sentiment import FinBertSentimentAnalyzer, HeuristicSentimentAnalyzer, SentimentInferenceError
@@ -51,12 +51,27 @@ def test_entities_preserve_mentions_without_inventing_identifiers() -> None:
     assert entities[-1].resolved is False
 
 
+def test_entities_cover_financial_institutions_markets_and_assets() -> None:
+    entities = AliasEntityExtractor().extract("The ECB discussed crude oil and Nifty 50 exposure in the banking sector.")
+    assert [entity.canonical_name for entity in entities] == ["European Central Bank", "Crude Oil", "Nifty 50", "Banking"]
+    assert [entity.entity_type for entity in entities] == ["central_bank", "commodity", "index", "sector"]
+    assert all(entity.resolved for entity in entities)
+
+
 def test_event_categories_and_fallback_are_deterministic() -> None:
     classifier = RuleBasedEventClassifier()
     assert classifier.classify("The central bank changed interest rate policy").event_type == "macroeconomic"
     assert classifier.classify("The borrower missed payment and entered default").event_type == "credit_event"
     assert classifier.classify("A merger and acquisition was announced").event_type == "merger_acquisition"
     assert classifier.classify("A quiet administrative notice").event_type == "other"
+
+
+def test_broader_event_types_have_stable_groups() -> None:
+    classifier = RuleBasedEventClassifier()
+    result = classifier.classify("The bank disclosed a ransomware data breach.")
+    assert result.event_type == "cyber_incident"
+    assert event_group_for_type(result.event_type) == "operational_technology"
+    assert event_group_for_type("credit_event") == "credit_financial"
 
 
 def test_impact_score_is_bounded_and_explainable() -> None:

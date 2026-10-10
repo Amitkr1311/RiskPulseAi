@@ -113,6 +113,12 @@ def test_articles_support_filters_pagination_search_and_date_validation(client, 
 def test_signals_support_filters_latest_and_nested_article(client, db_session) -> None:
     processed, pending, _failed = seed_api_records(db_session)
 
+    taxonomy = client.get("/signals/taxonomy")
+    assert taxonomy.status_code == 200
+    assert "credit_financial" in taxonomy.json()["event_groups"]
+    assert "cyber_incident" in taxonomy.json()["event_types"]
+    assert "central_bank" in taxonomy.json()["entity_types"]
+
     response = client.get("/signals?event_type=credit_event&impact_min=7&sentiment_label=negative&is_demo=true")
     assert response.status_code == 200
     assert response.json()["total"] == 1
@@ -124,6 +130,14 @@ def test_signals_support_filters_latest_and_nested_article(client, db_session) -
     assert response.status_code == 200
     assert response.json()["total"] == 1
     assert response.json()["items"][0]["article_id"] == pending.id
+
+    response = client.get("/signals?event_group=credit_financial")
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["items"][0]["event_group"] == "credit_financial"
+
+    response = client.get("/signals?event_group=not-a-group")
+    assert response.status_code == 422
 
     response = client.get("/signals/latest?limit=1")
     assert response.status_code == 200

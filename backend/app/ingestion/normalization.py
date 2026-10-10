@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
 from app.ingestion.errors import ProviderValidationError
 
@@ -68,12 +68,14 @@ class NormalizedArticle(BaseModel):
 
     @field_validator("external_id", "url", mode="before")
     @classmethod
-    def clean_optional_text(cls, value: Any) -> str | None:
+    def clean_optional_text(cls, value: Any, info: ValidationInfo) -> str | None:
         if value is None:
             return None
         if not isinstance(value, str):
             raise ProviderValidationError("optional text field is malformed")
         cleaned = normalize_whitespace(value)
+        if info.field_name == "external_id" and len(cleaned) > 255:
+            return f"sha256:{hashlib.sha256(cleaned.encode('utf-8')).hexdigest()}"
         return cleaned or None
 
     @field_validator("published_at", "ingested_at", mode="before")
@@ -86,4 +88,3 @@ class NormalizedArticle(BaseModel):
         if not self.content_hash:
             self.content_hash = content_hash_for(self.title, self.text)
         return self
-

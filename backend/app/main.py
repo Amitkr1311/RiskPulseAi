@@ -1,3 +1,6 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -12,10 +15,34 @@ from app.api.ingestion import router as ingestion_router
 from app.api.nlp import router as nlp_router
 from app.api.signals import router as signals_router
 from app.api.dashboard import router as dashboard_router
+from app.api.portfolio import router as portfolio_router
+from app.api.stress_testing import router as stress_testing_router
+from app.ingestion.scheduler import LiveIngestionScheduler
 from app.schemas.health import DependencyHealth, HealthResponse
 
 settings = get_settings()
-app = FastAPI(title=settings.app_name, version="0.1.0", description="RiskPulse AI foundation API")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    stop_event = asyncio.Event()
+    task = None
+    if settings.ingestion_live_enabled:
+        task = asyncio.create_task(LiveIngestionScheduler(settings).run(stop_event))
+    try:
+        yield
+    finally:
+        if task is not None:
+            stop_event.set()
+            await task
+
+
+app = FastAPI(
+    title=settings.app_name,
+    version="0.1.0",
+    description="RiskPulse AI foundation API",
+    lifespan=lifespan,
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.backend_cors_origins,
@@ -28,6 +55,8 @@ app.include_router(ingestion_router)
 app.include_router(nlp_router)
 app.include_router(signals_router)
 app.include_router(dashboard_router)
+app.include_router(portfolio_router)
+app.include_router(stress_testing_router)
 
 
 @app.exception_handler(SQLAlchemyError)
