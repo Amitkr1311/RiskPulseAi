@@ -17,6 +17,9 @@ class ArticleRead(BaseModel):
     content_hash: str
     is_demo: bool
     processing_status: str
+    processing_error: str | None
+    processing_attempts: int
+    processed_at: datetime | None
 
 
 class ArticlePage(BaseModel):
@@ -24,4 +27,3 @@ class ArticlePage(BaseModel):
     total: int
     limit: int
     offset: int
-

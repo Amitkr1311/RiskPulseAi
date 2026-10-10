@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     ingestion_request_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     ingestion_max_retries: int = Field(default=2, ge=0, le=5)
     ingestion_retry_backoff_seconds: float = Field(default=0.25, ge=0, le=30)
+    nlp_sentiment_backend: str = "heuristic"
+    nlp_sentiment_model_id: str = "ProsusAI/finbert"
+    nlp_allow_model_download: bool = False
+    nlp_model_device: str = "cpu"
+    nlp_max_text_chars: int = Field(default=12_000, ge=500, le=100_000)
+    nlp_batch_size: int = Field(default=25, ge=1, le=100)
+    nlp_entity_aliases_path: str = "data/entity_aliases.json"
 
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),

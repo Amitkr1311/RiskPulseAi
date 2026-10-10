@@ -1,0 +1,8 @@
+[
+  {"canonical_name": "Apple", "aliases": ["Apple", "Apple Inc"], "entity_type": "organization"},
+  {"canonical_name": "Microsoft", "aliases": ["Microsoft", "Microsoft Corporation"], "entity_type": "organization"},
+  {"canonical_name": "Tesla", "aliases": ["Tesla", "Tesla Inc"], "entity_type": "organization"},
+  {"canonical_name": "Reserve Bank of India", "aliases": ["RBI", "Reserve Bank of India"], "entity_type": "organization"},
+  {"canonical_name": "Federal Reserve", "aliases": ["Federal Reserve", "Fed"], "entity_type": "organization"},
+  {"canonical_name": "Government of India", "aliases": ["Government of India"], "entity_type": "organization"}
+]

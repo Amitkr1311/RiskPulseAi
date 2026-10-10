@@ -26,6 +26,9 @@ class Article(Base):
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     processing_status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    processing_error: Mapped[str | None] = mapped_column(String(128))
+    processing_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     entities: Mapped[list["ArticleEntity"]] = relationship(back_populates="article", cascade="all, delete-orphan")
     signals: Mapped[list["RiskSignal"]] = relationship(back_populates="article", cascade="all, delete-orphan")
@@ -60,17 +63,25 @@ class ArticleEntity(Base):
 
 class RiskSignal(Base):
     __tablename__ = "risk_signals"
+    __table_args__ = (UniqueConstraint("article_id", name="uq_risk_signals_article_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     article_id: Mapped[int] = mapped_column(ForeignKey("articles.id", ondelete="CASCADE"), nullable=False)
     entity_id: Mapped[int | None] = mapped_column(ForeignKey("entities.id", ondelete="SET NULL"))
-    entity_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    entity_name: Mapped[str | None] = mapped_column(String(255))
     sentiment_score: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False)
+    sentiment_label: Mapped[str | None] = mapped_column(String(16))
+    sentiment_probabilities: Mapped[dict[str, object] | None] = mapped_column(JSON)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_confidence: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
     impact_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    impact_factors: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    entities: Mapped[list[dict[str, object]] | None] = mapped_column(JSON)
     confidence: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
     explanation: Mapped[str] = mapped_column(Text, nullable=False)
     model_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    model_metadata: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    scoring_config_version: Mapped[str] = mapped_column(String(64), nullable=False, default="impact-v1")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     article: Mapped[Article] = relationship(back_populates="signals")

@@ -37,3 +37,12 @@ Returns whether each live adapter is configured and the latest 20 ingestion runs
 
 If `INGESTION_API_KEY` is configured, add `X-Ingestion-Key` to both POST requests. This is a lightweight local/demo control, not a substitute for production authentication.
 
+## Milestone 3 NLP and signals
+
+- `GET /nlp/status`: configured sentiment backend, model availability, article processing counts, and signal count.
+- `POST /nlp/process-pending`: process a bounded batch. Body is optional; use `{"limit":25}` with a maximum of 100.
+- `POST /nlp/process/{article_id}`: process one article and return `processed`, `skipped`, or `failed`.
+- `GET /signals`: paginated persisted signals. Filters include `event_type`, `source`, `entity`, `impact_min`, `impact_max`, `created_from`, and `created_to`.
+- `GET /signals/{signal_id}`: one signal with article source, entity mentions, sentiment probabilities, event confidence, impact factor breakdown, rationale, and model metadata.
+
+NLP processing endpoints are bounded local/demo controls, not production authentication or rate limiting. The default backend is deterministic `heuristic`; optional FinBERT setup and its licensing limitation are documented in [`docs/nlp.md`](nlp.md).

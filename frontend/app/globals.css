@@ -95,6 +95,44 @@ h1 {
   color: #a94b20;
 }
 
+.action-button {
+  background: var(--accent);
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+.signal-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.signal {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+
+.signal h3 {
+  margin: 8px 0;
+}
+
+.signal p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.signal-meta {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .status-details {
   color: var(--muted);
   display: grid;
@@ -113,4 +151,3 @@ h1 {
   margin-top: 40px;
   padding-left: 16px;
 }
-

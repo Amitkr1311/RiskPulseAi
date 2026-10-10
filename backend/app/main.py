@@ -9,6 +9,8 @@ from app.core.config import get_settings
 from app.db.session import get_db
 from app.api.articles import router as articles_router
 from app.api.ingestion import router as ingestion_router
+from app.api.nlp import router as nlp_router
+from app.api.signals import router as signals_router
 from app.schemas.health import DependencyHealth, HealthResponse
 
 settings = get_settings()
@@ -22,6 +24,8 @@ app.add_middleware(
 )
 app.include_router(articles_router)
 app.include_router(ingestion_router)
+app.include_router(nlp_router)
+app.include_router(signals_router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])
