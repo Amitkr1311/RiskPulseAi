@@ -3,6 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.schemas.articles import ArticleRead
+
 
 class EntitySignalRead(BaseModel):
     mention: str
@@ -20,17 +22,19 @@ class RiskSignalRead(BaseModel):
     source: str
     article_title: str
     article_url: str | None
+    is_demo: bool
+    article: ArticleRead
     entities: list[EntitySignalRead]
-    sentiment_label: str
+    sentiment_label: str | None
     sentiment_score: float
-    sentiment_probabilities: dict[str, float]
+    sentiment_probabilities: dict[str, float] | None
     event_type: str
-    event_confidence: float | None
+    event_confidence: float | None = Field(default=None, ge=0, le=1)
     impact_score: int = Field(ge=1, le=10)
-    impact_factors: dict[str, Any]
+    impact_factors: dict[str, Any] | None
     explanation: str
     model_version: str
-    model_metadata: dict[str, Any]
+    model_metadata: dict[str, Any] | None
     scoring_config_version: str
     created_at: datetime
 
@@ -39,6 +43,13 @@ class RiskSignalRead(BaseModel):
     def validate_sentiment_score(cls, value: float) -> float:
         if not -1 <= value <= 1:
             raise ValueError("sentiment_score must be between -1 and 1")
+        return value
+
+    @field_validator("sentiment_probabilities")
+    @classmethod
+    def validate_probabilities(cls, value: dict[str, float] | None) -> dict[str, float] | None:
+        if value is not None and any(not 0 <= probability <= 1 for probability in value.values()):
+            raise ValueError("sentiment probabilities must be between 0 and 1")
         return value
 
 

@@ -56,7 +56,10 @@ The same processing is available from the backend with `python -m app.nlp.proces
 - `GET /articles`, `GET /articles/{article_id}`
 - `POST /ingestion/run`, `POST /ingestion/demo`, `GET /ingestion/status`
 - `GET /nlp/status`, `POST /nlp/process-pending`, `POST /nlp/process/{article_id}`
-- `GET /signals`, `GET /signals/{signal_id}`
+- `GET /signals`, `GET /signals/latest`, `GET /signals/{signal_id}`
+- `GET /dashboard/summary`
+
+Collection responses use `{items, total, limit, offset}`. Articles support `source`, `processing_status`, `published_from`, `published_to`, and `search`. Signals support entity, event, sentiment, impact, source, demo/live, publication, and signal-creation filters. Signal details include the original nested article. See [`docs/api.md`](docs/api.md) for request examples and validation behavior.
 
 ## Verification commands
 
@@ -81,5 +84,7 @@ npm run build
 Tests use deterministic fixtures and mocked provider/model boundaries; they do not require live provider credentials or a model download. FinBERT is optional and its model page does not declare a license, so commercial use requires legal review.
 
 ## Scope boundaries
+
+Milestone 4 adds the API integration layer only. It does not include portfolio valuation, stress-testing calculations, or the complete dashboard. The next implementation step after this milestone is Portfolio Stress Testing.
 
 Milestone 3 does not include a portfolio-aware score, ingestion scheduler, multilingual analysis, production entity master, trained event classifier, stress-testing calculations, or the complete dashboard. The recommended next step is Milestone 4 — Portfolio Stress Testing.

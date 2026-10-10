@@ -9,7 +9,9 @@ Query parameters:
 - `limit`: 1–100, default 20.
 - `offset`: 0–100000, default 0.
 - `source`: optional provider source such as `news` or `reddit`.
+- `processing_status`: optional `pending`, `processing`, `processed`, or `failed` filter.
 - `published_from`, `published_to`: optional ISO-8601 timestamps.
+- `search`: optional case-insensitive title/text search.
 
 The response contains `items`, `total`, `limit`, and `offset`.
 
@@ -46,3 +48,19 @@ If `INGESTION_API_KEY` is configured, add `X-Ingestion-Key` to both POST request
 - `GET /signals/{signal_id}`: one signal with article source, entity mentions, sentiment probabilities, event confidence, impact factor breakdown, rationale, and model metadata.
 
 NLP processing endpoints are bounded local/demo controls, not production authentication or rate limiting. The default backend is deterministic `heuristic`; optional FinBERT setup and its licensing limitation are documented in [`docs/nlp.md`](nlp.md).
+
+## Milestone 4 API layer
+
+- `GET /signals/latest?limit=10`: newest persisted signals, bounded to 50, using the standard `{items, total, limit, offset}` envelope.
+- `GET /dashboard/summary`: calculated article, processing, signal, impact, recent-count, demo/live, and timestamp metrics.
+
+Signal filters include `sentiment_label`, `sentiment_min`, `sentiment_max`, `is_demo`, and publication dates in addition to the Milestone 3 filters. All collection endpoints, including `/signals/latest`, return `items`, `total`, `limit`, and `offset`.
+
+Signal detail includes both the flattened signal fields and an `article` object containing the original source article and processing metadata. Date ranges are validated with HTTP 422 for inverted bounds; missing records return HTTP 404; database failures return a sanitized HTTP 503 response.
+
+Example frontend request:
+
+```ts
+const response = await fetch(`${apiUrl}/signals?limit=20&impact_min=7&is_demo=false`);
+const page = await response.json(); // { items, total, limit, offset }
+```
