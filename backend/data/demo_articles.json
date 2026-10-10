@@ -1,21 +1,38 @@
 [
   {
     "source": "news",
-    "external_id": "demo-news-001",
-    "title": "Synthetic banking sector outlook remains under review",
-    "text": "This deterministic fixture represents a financial-news article for a later ingestion milestone.",
-    "url": "https://example.invalid/riskpulse/demo-news-001",
+    "external_id": "demo-news-earnings-001",
+    "title": "Synthetic bank reports stronger quarterly earnings",
+    "text": "A deterministic earnings fixture for future NLP development. The synthetic bank reported stronger quarterly earnings and stable operating income.",
+    "url": "https://example.invalid/riskpulse/demo-news-earnings-001",
     "published_at": "2026-01-15T09:00:00Z",
     "is_demo": true
   },
   {
+    "source": "news",
+    "external_id": "demo-news-credit-001",
+    "title": "Synthetic borrower faces a credit event",
+    "text": "A deterministic credit-event fixture for future NLP development. A synthetic borrower missed a scheduled payment and entered restructuring discussions.",
+    "url": "https://example.invalid/riskpulse/demo-news-credit-001",
+    "published_at": "2026-01-16T09:00:00Z",
+    "is_demo": true
+  },
+  {
     "source": "reddit",
-    "external_id": "demo-social-001",
-    "title": "Synthetic market discussion fixture",
-    "text": "This deterministic fixture represents a social-media post for a later ingestion milestone.",
-    "url": "https://example.invalid/riskpulse/demo-social-001",
-    "published_at": "2026-01-15T10:00:00Z",
+    "external_id": "demo-social-macro-001",
+    "title": "Discussion: central bank signals a possible rate change",
+    "text": "A deterministic macroeconomic discussion fixture for future NLP development. Participants discuss a possible central-bank rate change and bond-market sensitivity.",
+    "url": "https://example.invalid/riskpulse/demo-social-macro-001",
+    "published_at": "2026-01-17T10:00:00Z",
+    "is_demo": true
+  },
+  {
+    "source": "reddit",
+    "external_id": "demo-social-geopolitical-001",
+    "title": "Discussion: geopolitical disruption raises market uncertainty",
+    "text": "A deterministic geopolitical discussion fixture for future NLP development. Participants discuss supply-chain disruption and uncertainty across market sectors.",
+    "url": "https://example.invalid/riskpulse/demo-social-geopolitical-001",
+    "published_at": "2026-01-18T10:00:00Z",
     "is_demo": true
   }
 ]
-

@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import get_db
+from app.api.articles import router as articles_router
+from app.api.ingestion import router as ingestion_router
 from app.schemas.health import DependencyHealth, HealthResponse
 
 settings = get_settings()
@@ -18,6 +20,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(articles_router)
+app.include_router(ingestion_router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])
@@ -41,4 +45,3 @@ def health(db: Session = Depends(get_db)) -> HealthResponse | JSONResponse:
         version=app.version,
         database=DependencyHealth(status="healthy"),
     )
-
