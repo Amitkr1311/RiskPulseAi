@@ -4,7 +4,7 @@ RiskPulse AI Milestone 6 is a deterministic educational model. It produces hypot
 
 ## Eligibility and mapping
 
-A signal qualifies when its impact score is strictly greater than `STRESS_IMPACT_THRESHOLD` (default `7`), its event type maps to an enabled scenario, and portfolio relevance is established. Scores equal to the threshold are rejected. The current mappings are `geopolitical`, `macroeconomic`, `credit_event`, `regulatory`, and `market_crash`. Other NLP event types return `unsupported_event_type` until a validated scenario supports them.
+A signal qualifies when its impact score is strictly greater than `STRESS_TRIGGER_THRESHOLD` (default `7`), its event type maps to an enabled scenario, and portfolio relevance is established. Scores equal to the threshold are rejected. The complete mapping table covers every NLP event type; detailed event types share the closest validated scenario until a dedicated calibrated scenario is available.
 
 Geopolitical, macroeconomic, and broad-market-crash scenarios are broad-market scenarios. Credit and regulatory scenarios require an exact normalized entity, issuer, borrower, ticker, underlying, or sector relationship. Vague substring matching is not used. A targeted signal with no supported portfolio relationship returns `insufficient_portfolio_relevance`.
 
@@ -12,7 +12,7 @@ Geopolitical, macroeconomic, and broad-market-crash scenarios are broad-market s
 
 The versioned templates are stored in `app/portfolio/scenarios.py` and persisted in `stress_scenarios`:
 
-- Geopolitical: equity `-10%`, corporate spread `+150 bps`, government yield `-25 bps`, loan PD multiplier `1.5x`.
+- Geopolitical: equity `-10%`, corporate spread `+150 bps`, FX `-5%`, oil `+20%`, government yield `-25 bps`, loan PD multiplier `1.5x`.
 - Macroeconomic: government and corporate benchmark yields `+200 bps`, corporate spread `+75 bps`, equity `-8%`, loan PD multiplier `1.25x`.
 - Credit deterioration: corporate spread `+250 bps`, equity `-5%`, loan PD multiplier `2.0x`.
 - Regulatory: relevant equity `-12%`, relevant corporate spread `+100 bps`, relevant loan PD multiplier `1.5x`.
@@ -28,7 +28,8 @@ All monetary values use `Decimal` arithmetic and are rounded half-up to INR pais
 - Corporate bonds: `ΔP/P = -D_rate × Δbenchmark - D_spread × Δspread + convexity(rate)`; benchmark and spread effects are kept separate and spread widening is applied once.
 - Corporate loans: `ECL = exposure × PD × LGD`; stressed PD is `min(baseline PD × multiplier, 1)`. P&L is negative incremental ECL, not the full principal exposure.
 - Equities: `P&L = market value × return shock`. Beta is recorded as a reference and is not applied twice.
-- Derivatives: `P&L = current market value × delta-equivalent × underlying return shock`. Notional is retained for audit but is not treated as market value.
+- Interest-rate swaps: `P&L ≈ notional × duration × rate shock`; the rate shock is converted from basis points and the pay/receive direction is explicit.
+- FX forwards: `P&L ≈ notional × FX shock`. Notional is retained separately from market value.
 
 The portfolio convention is `P&L = stressed value - base value`. A negative P&L is a loss. `loss_percentage` is positive for a loss, while `portfolio_return_percentage` follows the signed P&L.
 

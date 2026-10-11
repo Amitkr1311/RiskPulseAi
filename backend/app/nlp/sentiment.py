@@ -39,7 +39,10 @@ class HeuristicSentimentAnalyzer:
             "negative": max(-score, 0.0),
             "neutral": 1.0 - abs(score),
         }
-        return SentimentResult(label, score, probabilities, "heuristic", self.model_id)
+        result = SentimentResult(label, score, probabilities, "heuristic", self.model_id)
+        if not -1.0 <= result.score <= 1.0:
+            raise SentimentInferenceError("heuristic sentiment score is outside [-1, 1]")
+        return result
 
 
 class FinBertSentimentAnalyzer:
@@ -95,4 +98,6 @@ class FinBertSentimentAnalyzer:
         probabilities = {key: value / total for key, value in probabilities.items()}
         label = max(probabilities, key=probabilities.get)
         score = probabilities["positive"] - probabilities["negative"]
+        if not -1.0 <= score <= 1.0:
+            raise SentimentInferenceError("FinBERT sentiment score is outside [-1, 1]")
         return SentimentResult(label, score, probabilities, "finbert", self.model_id)

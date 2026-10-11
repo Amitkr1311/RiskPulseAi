@@ -28,9 +28,9 @@ Detailed event types include `geopolitical`, `macroeconomic`, `credit_event`, `m
 
 The score is deterministic and bounded to 1–10:
 
-`round(1 + 9 × (0.65 × severity + 0.20 × |sentiment_score| + 0.15 × source_reliability))`
+`round(1 + 9 × (0.60 × event_type_weight + 0.20 × sentiment_magnitude + 0.10 × source_reliability + 0.10 × entity_exposure))`
 
-Severity and source-reliability tables are in `app/nlp/impact.py`. Every persisted signal stores the factor breakdown and rationale. Portfolio relevance is explicitly not assessed until stress testing.
+Sentiment is one float in `[-1, 1]`: FinBERT uses `P(positive) - P(negative)`, while the deterministic heuristic uses the same range. The label and class probabilities are stored as extra metadata. Impact is an integer from 1 to 10. Every persisted signal stores sentiment magnitude, event-type weight, normalized entity exposure, source reliability, and the plain-English rationale.
 
 ## Processing commands and endpoints
 

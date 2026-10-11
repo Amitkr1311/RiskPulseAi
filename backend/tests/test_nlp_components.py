@@ -10,8 +10,13 @@ from app.portfolio.scenarios import EVENT_SCENARIO_MAP
 
 def test_heuristic_sentiment_covers_positive_negative_and_neutral() -> None:
     analyzer = HeuristicSentimentAnalyzer()
-    assert analyzer.analyze("strong profit growth").label == "positive"
-    assert analyzer.analyze("default and severe losses").label == "negative"
+    positive = analyzer.analyze("strong profit growth")
+    negative = analyzer.analyze("default and severe losses")
+    assert positive.label == "positive"
+    assert negative.label == "negative"
+    assert -1 <= positive.score <= 1
+    assert -1 <= negative.score <= 1
+    assert sum(positive.probabilities.values()) == pytest.approx(1)
     neutral = analyzer.analyze("the company held a meeting")
     assert neutral.label == "neutral"
     assert neutral.score == 0
@@ -92,5 +97,16 @@ def test_impact_score_is_bounded_and_explainable() -> None:
     second = scorer.score("news", event, sentiment)
     assert first == second
     assert 1 <= first.score <= 10
-    assert "severity" in first.factors
-    assert "portfolio_relevance" in first.factors
+    assert {"sentiment_magnitude", "event_type_weight", "entity_exposure"} <= set(first.factors)
+    assert "sentiment magnitude" in first.rationale
+    assert "event-type weight" in first.rationale
+    assert "entity exposure" in first.rationale
+
+
+def test_impact_score_uses_bounded_entity_exposure_factor() -> None:
+    sentiment = HeuristicSentimentAnalyzer().analyze("losses")
+    event = RuleBasedEventClassifier().classify("credit default")
+    result = ImpactScorer().score("social", event, sentiment, entity_exposure=4)
+
+    assert 1 <= result.score <= 10
+    assert result.factors["entity_exposure"] == 1.0

@@ -128,7 +128,7 @@ class NLPService:
         entities = self.entity_extractor.extract(preprocessed.text)
         sentiment = self.sentiment.analyze(preprocessed.text)
         event = self.event_classifier.classify(preprocessed.text)
-        impact = self.impact_scorer.score(article.source, event, sentiment)
+        impact = self.impact_scorer.score(article.source, event, sentiment, len(entities) / 3)
         return AnalysisResult(preprocessed.text, entities, sentiment, event, impact)
 
     def _persist(self, article_id: int, analysis: AnalysisResult) -> RiskSignal:
