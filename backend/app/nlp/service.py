@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from dataclasses import dataclass
 import importlib.util
+import logging
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -19,6 +20,9 @@ from app.nlp.sentiment import (
     SentimentInferenceError,
     UnavailableSentimentAnalyzer,
 )
+from app.stress_testing.service import StressTestingService
+
+logger = logging.getLogger("riskpulse.nlp")
 
 
 @dataclass(frozen=True)
@@ -200,6 +204,12 @@ class NLPService:
         article.processed_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(signal)
+        try:
+            StressTestingService(self.db, self.settings).auto_trigger_for_signal(signal.id)
+        except Exception:
+            # The signal is already durable; a missing portfolio or scenario must
+            # not turn successful NLP persistence into a failed article process.
+            logger.exception("Automatic stress trigger failed", extra={"signal_id": signal.id})
         return signal
 
     def _record_failure(self, article_id: int, error_code: str) -> ProcessingResult:

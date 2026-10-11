@@ -56,7 +56,7 @@ class StressEligibilityService:
         positions: list[PortfolioPosition],
     ) -> EligibilityResult:
         reasons: list[str] = []
-        if signal.impact_score <= self.settings.stress_impact_threshold:
+        if signal.impact_score <= self.settings.stress_trigger_threshold:
             reasons.append("below_impact_threshold")
 
         matching = [
@@ -88,7 +88,7 @@ class StressEligibilityService:
         return EligibilityResult(
             eligible=not reasons,
             reasons=tuple(dict.fromkeys(reasons)),
-            impact_threshold=self.settings.stress_impact_threshold,
+            impact_threshold=self.settings.stress_trigger_threshold,
             impact_score=signal.impact_score,
             matching_scenarios=tuple(scenario.scenario_key or str(scenario.id) for scenario in matching),
             relevance_assessment=relevance,

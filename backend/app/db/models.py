@@ -86,7 +86,14 @@ class RiskSignal(Base):
 
     article: Mapped[Article] = relationship(back_populates="signals")
     entity: Mapped[Entity | None] = relationship(back_populates="signals")
-    stress_runs: Mapped[list["StressTestRun"]] = relationship(back_populates="trigger_signal")
+    stress_runs: Mapped[list["StressTestRun"]] = relationship(
+        back_populates="trigger_signal",
+        foreign_keys="StressTestRun.trigger_signal_id",
+    )
+    triggered_stress_runs: Mapped[list["StressTestRun"]] = relationship(
+        back_populates="triggered_by_signal",
+        foreign_keys="StressTestRun.triggered_by_signal_id",
+    )
 
 
 class Portfolio(Base):
@@ -158,6 +165,9 @@ class StressTestRun(Base):
     trigger_key: Mapped[str] = mapped_column(String(255), nullable=False)
     portfolio_id: Mapped[int | None] = mapped_column(ForeignKey("portfolios.id", ondelete="SET NULL"), index=True)
     trigger_signal_id: Mapped[int | None] = mapped_column(ForeignKey("risk_signals.id", ondelete="SET NULL"))
+    triggered_by_signal_id: Mapped[int | None] = mapped_column(
+        ForeignKey("risk_signals.id", ondelete="SET NULL"), index=True
+    )
     scenario_id: Mapped[int] = mapped_column(ForeignKey("stress_scenarios.id"), nullable=False)
     portfolio_value_before: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     portfolio_value_after: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
@@ -176,7 +186,14 @@ class StressTestRun(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     portfolio: Mapped[Portfolio | None] = relationship(back_populates="stress_runs")
-    trigger_signal: Mapped[RiskSignal | None] = relationship(back_populates="stress_runs")
+    trigger_signal: Mapped[RiskSignal | None] = relationship(
+        back_populates="stress_runs",
+        foreign_keys=[trigger_signal_id],
+    )
+    triggered_by_signal: Mapped[RiskSignal | None] = relationship(
+        back_populates="triggered_stress_runs",
+        foreign_keys=[triggered_by_signal_id],
+    )
     scenario: Mapped[StressScenario] = relationship(back_populates="runs")
     results: Mapped[list["StressTestResult"]] = relationship(back_populates="run", cascade="all, delete-orphan")
 

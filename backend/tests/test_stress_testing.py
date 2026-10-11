@@ -4,9 +4,10 @@ from decimal import Decimal
 import pytest
 
 from app.core.config import Settings
-from app.db.models import Article, Portfolio, RiskSignal
+from app.db.models import Article, Portfolio, RiskSignal, StressTestRun
 from app.db.seed import seed_demo_portfolio, seed_scenarios
 from app.schemas.portfolio import CorporateBondParameters, CorporateLoanParameters, DerivativeParameters, EquityParameters, GovernmentBondParameters
+from app.nlp.service import NLPService
 from app.stress_testing.calculations import corporate_bond_valuation, corporate_loan_valuation, derivative_valuation, equity_valuation, government_bond_valuation
 from app.stress_testing.service import StressTestingService
 
@@ -69,6 +70,43 @@ def test_broad_market_run_is_deterministic_and_reconciles(db_session) -> None:
     assert first.pnl == Decimal("-34368750.00")
     assert first.reconciliation.reconciled is True
     assert len(first.results) == 5
+
+
+def test_high_impact_persisted_signal_automatically_runs_matching_scenario(db_session) -> None:
+    portfolio = seed_demo_portfolio(db_session)
+    seed_scenarios(db_session)
+    article = Article(
+        source="demo",
+        title="War sanctions raise market risk",
+        text="War and sanctions create a crisis with losses for financial markets.",
+        content_hash="auto-trigger-geopolitical",
+        is_demo=True,
+        processing_status="pending",
+    )
+    db_session.add(article)
+    db_session.commit()
+
+    result = NLPService(db_session, Settings()).process_article(article.id)
+
+    assert result.status == "processed"
+    run = db_session.query(StressTestRun).one()
+    assert run.portfolio_id == portfolio.id
+    assert run.trigger_mode == "automatic"
+    assert run.triggered_by_signal_id == result.signal_id
+    assert run.trigger_signal_id == result.signal_id
+
+
+def test_auto_trigger_uses_strictly_greater_than_threshold(db_session) -> None:
+    portfolio = seed_demo_portfolio(db_session)
+    seed_scenarios(db_session)
+    signal = _seed_signal(db_session, event_type="market_crash", impact_score=7)
+
+    triggered = StressTestingService(db_session, Settings()).auto_trigger_for_signal(
+        signal.id, portfolio.id
+    )
+
+    assert triggered == []
+    assert db_session.query(StressTestRun).count() == 0
 
 
 def test_eligibility_threshold_mapping_and_relevance(db_session) -> None:

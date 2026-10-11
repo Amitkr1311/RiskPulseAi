@@ -88,6 +88,7 @@ class StressRunSummary(BaseModel):
     scenario_name: str
     scenario_version: str
     trigger_signal_id: int | None
+    triggered_by_signal_id: int | None
     trigger_mode: str
     status: str
     portfolio_value_before: Decimal

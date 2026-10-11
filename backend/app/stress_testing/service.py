@@ -60,6 +60,31 @@ class StressTestingService:
             relevance_assessment=result.relevance_assessment,
         )
 
+    def auto_trigger_for_signal(
+        self, signal_id: int, portfolio_id: int | None = None
+    ) -> list[tuple[StressRunDetail, bool]]:
+        """Run every enabled scenario mapped to a newly persisted high-impact signal."""
+        signal = self._get_signal(signal_id)
+        if signal.impact_score <= self.settings.stress_trigger_threshold:
+            return []
+
+        portfolio = self._get_portfolio(portfolio_id)
+        scenarios = self.db.scalars(select(StressScenario).order_by(StressScenario.id.asc())).all()
+        eligibility = self.eligibility.evaluate(signal, scenarios, self._positions(portfolio.id))
+        if not eligibility.eligible:
+            return []
+
+        return [
+            self.run(
+                portfolio_id=portfolio.id,
+                scenario_id=scenario_id,
+                risk_signal_id=signal.id,
+                trigger_mode="automatic",
+                fresh_run=False,
+            )
+            for scenario_id in eligibility.matching_scenarios
+        ]
+
     def run(
         self,
         *,
@@ -136,6 +161,7 @@ class StressTestingService:
             trigger_key=trigger_key,
             portfolio_id=portfolio.id,
             trigger_signal_id=signal.id if signal is not None else None,
+            triggered_by_signal_id=signal.id if signal is not None else None,
             scenario_id=scenario.id,
             portfolio_value_before=base_total,
             portfolio_value_after=stressed_total,
@@ -292,6 +318,7 @@ class StressTestingService:
             scenario_name=run.scenario.name,
             scenario_version=run.scenario_version,
             trigger_signal_id=run.trigger_signal_id,
+            triggered_by_signal_id=run.triggered_by_signal_id or run.trigger_signal_id,
             trigger_mode=run.trigger_mode,
             status=run.status,
             portfolio_value_before=run.portfolio_value_before,

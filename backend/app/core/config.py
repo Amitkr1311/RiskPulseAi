@@ -36,7 +36,12 @@ class Settings(BaseSettings):
     nlp_max_text_chars: int = Field(default=12_000, ge=500, le=100_000)
     nlp_batch_size: int = Field(default=25, ge=1, le=100)
     nlp_entity_aliases_path: str = "data/entity_aliases.json"
-    stress_impact_threshold: int = Field(default=7, ge=1, le=9)
+    research_reports_dir: str = "research/reports"
+    research_market_data_dir: str = "research/market_data"
+    # A strict greater-than comparison is used by automatic stress triggers.
+    # Keep the older name as an input alias for existing local environments.
+    stress_trigger_threshold: int = Field(default=7, ge=1, le=9)
+    stress_impact_threshold: int | None = Field(default=None, ge=1, le=9)
     stress_model_version: str = "stress-v1"
     stress_reconciliation_tolerance: Decimal = Field(default=Decimal("0.01"), ge=Decimal("0"), le=Decimal("1"))
 
@@ -46,6 +51,11 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    def model_post_init(self, __context: object) -> None:
+        if self.stress_impact_threshold is not None:
+            self.stress_trigger_threshold = self.stress_impact_threshold
+        self.stress_impact_threshold = self.stress_trigger_threshold
 
 
 @lru_cache
