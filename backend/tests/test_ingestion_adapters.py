@@ -7,7 +7,8 @@ import pytest
 from app.core.config import Settings
 from app.ingestion.adapters.news import NewsRssAdapter
 from app.ingestion.adapters.reddit import RedditAdapter
-from app.ingestion.errors import ProviderNotConfiguredError, ProviderValidationError
+from app.ingestion.adapters.social import SocialCsvAdapter
+from app.ingestion.errors import ProviderNotConfiguredError, ProviderResponseError, ProviderTimeoutError, ProviderValidationError
 
 
 NEWS_XML = b"""
@@ -18,6 +19,15 @@ NEWS_XML = b"""
   <link>https://example.test/news-1</link>
   <pubDate>Mon, 19 Jan 2026 10:00:00 GMT</pubDate>
 </item></channel></rss>
+"""
+
+ATOM_XML = b"""
+<feed xmlns="http://www.w3.org/2005/Atom"><entry>
+  <id>atom-1</id><title>Market update</title>
+  <summary type="html"><![CDATA[<p>Index moved higher.</p>]]></summary>
+  <link href="https://example.test/atom-1" />
+  <updated>2026-01-19T10:00:00Z</updated>
+</entry></feed>
 """
 
 
@@ -70,6 +80,35 @@ def test_news_adapter_parses_rss_with_mocked_http():
     assert records[0]["text"] == "Revenue increased. Read more"
 
 
+def test_news_adapter_parses_atom_entries_and_link_attributes():
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, content=ATOM_XML, request=request))
+    settings = Settings(news_rss_url="https://example.test/feed")
+    with httpx.Client(transport=transport) as client:
+        records = NewsRssAdapter(settings, client).fetch(limit=10)
+
+    assert records == [{
+        "external_id": "atom-1",
+        "title": "Market update",
+        "text": "Index moved higher.",
+        "url": "https://example.test/atom-1",
+        "published_at": "2026-01-19T10:00:00Z",
+    }]
+
+
+def test_news_adapter_rejects_invalid_xml_and_surfaces_timeout():
+    invalid_transport = httpx.MockTransport(lambda request: httpx.Response(200, content=b"not xml", request=request))
+    with httpx.Client(transport=invalid_transport) as client:
+        with pytest.raises(ProviderResponseError):
+            NewsRssAdapter(Settings(news_rss_url="https://example.test/feed"), client).fetch(limit=10)
+
+    def timeout(_request):
+        raise httpx.ReadTimeout("timed out")
+
+    with httpx.Client(transport=httpx.MockTransport(timeout)) as client:
+        with pytest.raises(ProviderTimeoutError):
+            NewsRssAdapter(Settings(news_rss_url="https://example.test/feed"), client).fetch(limit=10)
+
+
 def test_reddit_record_normalizes_same_contract():
     adapter = RedditAdapter(Settings(reddit_ingestion_enabled=True, reddit_access_token="token"))
 
@@ -112,6 +151,33 @@ def test_reddit_adapter_parses_api_response_with_mocked_http():
 
     assert records[0]["external_id"] == "post-1"
     assert records[0]["text"] == "The central bank held rates steady."
+
+
+def test_social_csv_replays_tweets_through_the_shared_normalization_contract(tmp_path):
+    csv_path = tmp_path / "tweets-vs-stock.csv"
+    csv_path.write_text(
+        "tweet_id,Tweet,Date,Stock Price\n"
+        "tweet-1,\"Bank shares face tariff risk\",2026-01-19,100.5\n",
+        encoding="utf-8",
+    )
+    adapter = SocialCsvAdapter(Settings(social_csv_path=str(csv_path)))
+
+    records = adapter.fetch(limit=10)
+    article = adapter.normalize(records[0])
+
+    assert adapter.configured is True
+    assert records[0]["external_id"] == "tweet-1"
+    assert article.source == "social"
+    assert article.text == "Bank shares face tariff risk"
+    assert article.published_at.tzinfo == UTC
+    assert article.is_demo is False
+
+
+def test_missing_social_csv_is_reported_as_not_configured(tmp_path):
+    adapter = SocialCsvAdapter(Settings(social_csv_path=str(tmp_path / "missing.csv")))
+
+    with pytest.raises(ProviderNotConfiguredError):
+        adapter.fetch(limit=10)
 
 
 def test_missing_or_malformed_fields_are_rejected():

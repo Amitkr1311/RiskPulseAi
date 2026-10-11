@@ -69,8 +69,10 @@ def test_ingestion_status_exposes_source_configuration_and_recent_runs(client):
 
     assert response.status_code == 200
     sources = {source["source"]: source for source in response.json()["sources"]}
-    assert set(sources) == {"news", "reddit"}
+    assert set(sources) == {"news", "social", "reddit"}
     assert sources["news"]["enabled"] is True
+    assert sources["social"]["enabled"] is True
+    assert sources["social"]["configured"] is False
     assert sources["reddit"]["enabled"] is False
     assert sources["reddit"]["last_run"] is None
     assert response.json()["live_enabled"] is False

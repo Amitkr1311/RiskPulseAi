@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://riskpulse:riskpulse@localhost:5432/riskpulse"
     backend_cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
     news_rss_url: str | None = None
+    social_csv_path: str = "data/tweets-vs-stock.csv"
     reddit_api_base_url: str = "https://oauth.reddit.com"
     reddit_ingestion_enabled: bool = False
     reddit_access_token: SecretStr | None = None
@@ -24,7 +25,7 @@ class Settings(BaseSettings):
     ingestion_batch_size: int = Field(default=25, ge=1, le=100)
     ingestion_poll_interval_seconds: int = Field(default=300, ge=1, le=86_400)
     ingestion_live_enabled: bool = False
-    ingestion_live_sources: list[str] = Field(default_factory=lambda: ["news", "reddit"])
+    ingestion_live_sources: list[str] = Field(default_factory=lambda: ["news", "social", "reddit"])
     ingestion_live_process_nlp: bool = True
     ingestion_request_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     ingestion_max_retries: int = Field(default=2, ge=0, le=5)

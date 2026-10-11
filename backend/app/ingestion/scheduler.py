@@ -9,7 +9,7 @@ from app.ingestion.service import IngestionService
 from app.nlp.service import NLPService
 
 logger = logging.getLogger("riskpulse.ingestion.scheduler")
-SUPPORTED_LIVE_SOURCES = frozenset({"news", "reddit"})
+SUPPORTED_LIVE_SOURCES = frozenset({"news", "social", "reddit"})
 
 
 class LiveIngestionScheduler:
@@ -25,11 +25,13 @@ class LiveIngestionScheduler:
 
     @property
     def sources(self) -> list[str]:
+        adapters = build_adapters(self.settings)
         return [
             source
             for source in self.settings.ingestion_live_sources
             if source in SUPPORTED_LIVE_SOURCES
             and (source != "reddit" or self.settings.reddit_ingestion_enabled)
+            and (source != "social" or adapters["social"].configured)
         ]
 
     def run_once(self) -> None:

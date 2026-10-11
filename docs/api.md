@@ -85,6 +85,12 @@ Portfolio money fields are explicit: `market_value_inr` is canonical and `market
 
 ## Live RSS and Reddit integration
 
+## Social CSV replay
+
+The `social` adapter replays a downloaded Kaggle tweets-vs-stock CSV through the same normalization, content-hash deduplication, and article persistence flow as RSS. Put the CSV at `backend/data/tweets-vs-stock.csv`, or set `SOCIAL_CSV_PATH` to another path. The adapter accepts common `Tweet`/`Text` content columns and optional ID, date, URL, and title columns; it does not create records when the file is absent. `/ingestion/status` always reports `news`, `social`, and optional `reddit` separately.
+
+The repository does not include the Kaggle dataset. Download the permitted tweets-vs-stock CSV yourself and place the export at that exact path before running `POST /ingestion/run` with `{"sources":["social"],"limit":25}`.
+
 Live polling is optional and disabled by default. Reddit ingestion is separately opt-in. Configure the provider credentials in the backend/root `.env` file, then enable the in-process poller:
 
 ```env

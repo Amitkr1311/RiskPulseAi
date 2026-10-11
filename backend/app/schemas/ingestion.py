@@ -3,11 +3,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-SourceName = Literal["news", "reddit"]
+SourceName = Literal["news", "social", "reddit"]
 
 
 class IngestionRunRequest(BaseModel):
-    sources: list[SourceName] = Field(default_factory=lambda: ["news", "reddit"], min_length=1)
+    sources: list[SourceName] = Field(default_factory=lambda: ["news", "social", "reddit"], min_length=1)
     limit: int = Field(default=25, ge=1, le=100)
 
 
