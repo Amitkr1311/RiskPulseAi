@@ -52,4 +52,4 @@ The frontend uses these endpoints directly. The stress page displays scenario as
 
 ## Limitations
 
-The model is first-order and simplified. It does not model liquidity, correlations, defaults as path-dependent events, accounting provisions, yield-curve shape changes, full derivatives pricing, or regulatory capital. Automatic trigger execution is prepared through the shared eligibility and orchestration service, while ingestion-to-NLP-to-stress background execution remains an integration milestone.
+The model is first-order and simplified. It does not model liquidity, correlations, defaults as path-dependent events, accounting provisions, yield-curve shape changes, full derivatives pricing, or regulatory capital. When the in-process live scheduler is enabled with NLP processing, a persisted qualifying signal invokes the same idempotent automatic trigger service; manual ingestion and NLP endpoints remain available for replay demos.

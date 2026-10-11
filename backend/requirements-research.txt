@@ -1,0 +1,5 @@
+# Optional offline sentiment evaluation dependencies.
+datasets>=3.0,<5
+
+# yfinance is included in backend/requirements.txt; install this file for the
+# optional Financial PhraseBank loader as well.

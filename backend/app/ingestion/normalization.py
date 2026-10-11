@@ -54,6 +54,8 @@ class NormalizedArticle(BaseModel):
     ingested_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     content_hash: str = ""
     is_demo: bool = False
+    is_historical: bool = False
+    source_metadata: dict[str, object] | None = None
     processing_status: str = "pending"
 
     @field_validator("source", "title", "text", mode="before")

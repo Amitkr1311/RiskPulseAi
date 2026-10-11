@@ -18,7 +18,7 @@ class SourceAdapter(Protocol):
     @property
     def configured(self) -> bool: ...
 
-    def fetch(self, limit: int) -> list[Mapping[str, object]]: ...
+    def fetch(self, limit: int, offset: int = 0) -> list[Mapping[str, object]]: ...
 
     def normalize(self, record: Mapping[str, object]) -> NormalizedArticle: ...
 
@@ -32,4 +32,3 @@ def validate_http_response(response: httpx.Response) -> None:
         raise ProviderTransientError("provider returned a server error")
     if response.status_code >= 400:
         raise ProviderResponseError("provider returned an unsuccessful response")
-

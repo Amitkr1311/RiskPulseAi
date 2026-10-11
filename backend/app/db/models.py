@@ -25,6 +25,8 @@ class Article(Base):
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
+    is_historical: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
+    source_metadata: Mapped[dict[str, object] | None] = mapped_column(JSON)
     processing_status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
     processing_error: Mapped[str | None] = mapped_column(String(128))
     processing_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")

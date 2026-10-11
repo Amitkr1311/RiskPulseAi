@@ -9,6 +9,7 @@ SourceName = Literal["news", "social", "reddit"]
 class IngestionRunRequest(BaseModel):
     sources: list[SourceName] = Field(default_factory=lambda: ["news", "social", "reddit"], min_length=1)
     limit: int = Field(default=25, ge=1, le=100)
+    offset: int = Field(default=0, ge=0, le=10_000_000)
 
 
 class SourceRunSummary(BaseModel):

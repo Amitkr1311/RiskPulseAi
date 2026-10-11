@@ -24,11 +24,11 @@ class FakeAdapter:
     def configured(self):
         return True
 
-    def fetch(self, limit: int):
+    def fetch(self, limit: int, offset: int = 0):
         self.fetch_calls += 1
         if self.fetch_calls <= self.failures:
             raise self.error
-        return self.records[:limit]
+        return self.records[offset : offset + limit]
 
     def normalize(self, record):
         return NormalizedArticle(**record)

@@ -1,6 +1,12 @@
 # Portfolio foundation
 
-Milestone 5 establishes a deterministic synthetic portfolio for local development. It provides base valuation and allocation data only; scenario triggers, stress calculations, stressed P&L, signal mapping, and portfolio-aware risk scores are deferred to later milestones.
+## Transaction-derived synthetic input
+
+`data/transactions.csv` is a consumer transaction export, not a bank wholesale portfolio. `scripts/build_portfolio.py` validates its `Date` and `Amount` fields, ignores non-debit rows for spending proxies, removes exact duplicate rows, groups by `Category` plus `Description` (the merchant-like field in this export), and maps category text to broad sectors such as utilities, transportation, consumer staples, financials, and real-estate services. Recurring groups inform the label and sector of a synthetic loan-exposure proxy; the data does not prove that a loan exists.
+
+The remaining government-bond, corporate-bond, equity, and derivative positions are clearly labelled synthetic allocations required by the case-study portfolio. The generated seed remains exactly ₹100 crore: 40% synthetic loan proxy, 25% government bonds, 20% corporate bonds, 10% equities, and 5% derivatives. Derivative notional is stored separately from marked-to-market value, and the four derivative positions retain their tenor, fixed/floating rate, pay/receive, FX pair, and forward/spot fields.
+
+The portfolio is deterministic and synthetic for local development. Its base valuation is database-backed and is consumed by the scenario, signal-relevance, and stress-testing services; the consumer transaction export informs labels and sector proxies but does not become a claimed wholesale holding book.
 
 ## Demo portfolio
 

@@ -41,7 +41,7 @@ def run_ingestion(
     settings: Settings = Depends(get_settings),
 ) -> IngestionResponse:
     service = IngestionService(db, build_adapters(settings), settings)
-    results = service.run(list(payload.sources), payload.limit)
+    results = service.run(list(payload.sources), payload.limit, payload.offset)
     return _response(results)
 
 

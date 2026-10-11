@@ -13,6 +13,7 @@ const navigation = [
   { href: "/news", label: "News Feed", mark: "N" },
   { href: "/portfolio", label: "Portfolio", mark: "P" },
   { href: "/stress-testing", label: "Stress Testing", mark: "T" },
+  { href: "/research", label: "Research", mark: "R" },
 ];
 
 const titles: Record<string, string> = {
@@ -21,6 +22,7 @@ const titles: Record<string, string> = {
   "/news": "News Feed",
   "/portfolio": "Portfolio",
   "/stress-testing": "Stress Testing",
+  "/research": "Research",
 };
 
 export function AppShell({ children }: { children: ReactNode }) {

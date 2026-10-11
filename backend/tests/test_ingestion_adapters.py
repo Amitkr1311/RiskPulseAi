@@ -171,6 +171,46 @@ def test_social_csv_replays_tweets_through_the_shared_normalization_contract(tmp
     assert article.text == "Bank shares face tariff risk"
     assert article.published_at.tzinfo == UTC
     assert article.is_demo is False
+    assert article.is_historical is True
+    assert article.source_metadata == {
+        "dataset": "Tweet Sentiment's Impact on Stock Returns",
+        "replay": True,
+        "stock_name": None,
+        "company_name": None,
+    }
+
+
+def test_social_adapter_preserves_stock_and_company_attribution(tmp_path):
+    csv_path = tmp_path / "tweets-vs-stock.csv"
+    csv_path.write_text(
+        "Date,Tweet,Stock Name,Company Name\n"
+        "2022-09-29T23:41:16+00:00,Profit outlook improved,TSLA,Tesla Inc.\n",
+        encoding="utf-8",
+    )
+    article = SocialCsvAdapter(Settings(social_csv_path=str(csv_path))).normalize(
+        SocialCsvAdapter(Settings(social_csv_path=str(csv_path))).fetch(limit=1)[0]
+    )
+
+    assert article.title == "Historical social post · TSLA / Tesla Inc."
+    assert article.is_historical is True
+    assert article.source_metadata["stock_name"] == "TSLA"
+    assert article.source_metadata["company_name"] == "Tesla Inc."
+
+
+def test_social_adapter_supports_deterministic_offsets(tmp_path):
+    csv_path = tmp_path / "tweets-vs-stock.csv"
+    csv_path.write_text(
+        "Date,Tweet,Stock Name,Company Name\n"
+        "2022-09-29T23:41:16+00:00,First post,TSLA,Tesla Inc.\n"
+        "2022-09-29T23:40:16+00:00,Second post,AAPL,Apple Inc.\n",
+        encoding="utf-8",
+    )
+    adapter = SocialCsvAdapter(Settings(social_csv_path=str(csv_path)))
+
+    records = adapter.fetch(limit=1, offset=1)
+
+    assert len(records) == 1
+    assert records[0]["text"] == "Second post"
 
 
 def test_missing_social_csv_is_reported_as_not_configured(tmp_path):

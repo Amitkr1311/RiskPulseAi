@@ -55,6 +55,6 @@ export function ImpactMark({ score }: { score: number }) {
 }
 
 export function SourceMark({ source }: { source: string }) {
-  return <span className="source-mark"><span className="source-dot" aria-hidden="true" />{source === "reddit" ? "Reddit" : source === "news" ? "RSS" : source}</span>;
+  const label = source === "reddit" ? "Reddit" : source === "news" ? "RSS" : source === "social" ? "Social" : source;
+  return <span className="source-mark"><span className="source-dot" aria-hidden="true" />{label}</span>;
 }
-

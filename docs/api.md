@@ -8,12 +8,12 @@ Query parameters:
 
 - `limit`: 1–100, default 20.
 - `offset`: 0–100000, default 0.
-- `source`: optional provider source such as `news` or `reddit`.
+- `source`: optional provider source such as `news`, `social`, or `reddit`.
 - `processing_status`: optional `pending`, `processing`, `processed`, or `failed` filter.
 - `published_from`, `published_to`: optional ISO-8601 timestamps.
 - `search`: optional case-insensitive title/text search.
 
-The response contains `items`, `total`, `limit`, and `offset`.
+The response contains `items`, `total`, `limit`, and `offset`. Each article also includes `is_historical` and optional `source_metadata`; social CSV replay rows have `is_historical=true` and `source="social"`.
 
 ## `GET /articles/{article_id}`
 
@@ -24,7 +24,7 @@ Returns a normalized article or HTTP 404. Article records include the demo/live 
 Request body:
 
 ```json
-{"sources": ["news", "reddit"], "limit": 25}
+{"sources": ["news", "social", "reddit"], "limit": 25, "offset": 0}
 ```
 
 Each selected source gets an isolated run. A missing provider configuration is reported as `disabled`; authentication, rate-limit, timeout, malformed-response, validation, and database failures are summarized without exposing credentials or authorization headers.
@@ -83,13 +83,13 @@ Invoke-RestMethod http://localhost:8000/portfolio/summary
 
 Portfolio money fields are explicit: `market_value_inr` is canonical and `market_value_crore` is derived using `₹1 crore = ₹10,000,000`. See [`portfolio.md`](portfolio.md) for the deterministic seed and parameter units, and [`stress_testing.md`](stress_testing.md) for stress formulas and audit behavior.
 
-## Live RSS and Reddit integration
+## Live RSS, social replay, and Reddit integration
 
 ## Social CSV replay
 
-The `social` adapter replays a downloaded Kaggle tweets-vs-stock CSV through the same normalization, content-hash deduplication, and article persistence flow as RSS. Put the CSV at `backend/data/tweets-vs-stock.csv`, or set `SOCIAL_CSV_PATH` to another path. The adapter accepts common `Tweet`/`Text` content columns and optional ID, date, URL, and title columns; it does not create records when the file is absent. `/ingestion/status` always reports `news`, `social`, and optional `reddit` separately.
+The `social` adapter replays a downloaded Tweet Sentiment's Impact on Stock Returns CSV through the same normalization, content-hash deduplication, and article persistence flow as RSS. Put the CSV at `backend/data/tweets-vs-stock.csv`, or set `SOCIAL_CSV_PATH` to another path. The actual export uses `Date`, `Tweet`, `Stock Name`, and `Company Name`; common `Tweet`/`Text` content columns and optional ID, date, URL, title, stock, and company columns are supported. Imported rows are marked as historical replay data and retain stock/company attribution in `source_metadata`. `/ingestion/status` always reports `news`, `social`, and optional `reddit` separately.
 
-The repository does not include the Kaggle dataset. Download the permitted tweets-vs-stock CSV yourself and place the export at that exact path before running `POST /ingestion/run` with `{"sources":["social"],"limit":25}`.
+The repository does not redistribute the dataset. Download a permitted export yourself and place it at that exact path before running `POST /ingestion/run` with `{"sources":["social"],"limit":100,"offset":0}`. Increase `offset` by `limit` for subsequent deterministic batches. The file contains no stock-return label column; the engine does not fabricate one or use one for impact scoring.
 
 Live polling is optional and disabled by default. Reddit ingestion is separately opt-in. Configure the provider credentials in the backend/root `.env` file, then enable the in-process poller:
 

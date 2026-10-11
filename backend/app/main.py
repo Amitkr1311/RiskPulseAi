@@ -17,6 +17,7 @@ from app.api.signals import router as signals_router
 from app.api.dashboard import router as dashboard_router
 from app.api.portfolio import router as portfolio_router
 from app.api.stress_testing import router as stress_testing_router
+from app.api.research import router as research_router
 from app.ingestion.scheduler import LiveIngestionScheduler
 from app.schemas.health import DependencyHealth, HealthResponse
 
@@ -57,6 +58,7 @@ app.include_router(signals_router)
 app.include_router(dashboard_router)
 app.include_router(portfolio_router)
 app.include_router(stress_testing_router)
+app.include_router(research_router)
 
 
 @app.exception_handler(SQLAlchemyError)

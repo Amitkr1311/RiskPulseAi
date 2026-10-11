@@ -28,7 +28,7 @@ export function RiskSignalTable({ signals, onSelect }: { signals: RiskSignal[]; 
                 <td><strong>{entity}</strong><span className="cell-subtext">{signal.entities.length} mention{signal.entities.length === 1 ? "" : "s"}</span></td>
                 <td>{titleCase(signal.event_type)}</td>
                 <td><span className="text-label">{signal.sentiment_label ?? "Not available"}</span><span className="cell-subtext tabular">{signal.sentiment_score.toFixed(2)}</span></td>
-                <td><SourceMark source={signal.source} /></td>
+                <td><SourceMark source={signal.source} />{signal.article.is_historical ? <span className="cell-subtext">Historical replay</span> : null}</td>
                 <td className="tabular nowrap">{formatDate(signal.created_at)}</td>
                 <td className="rationale-cell">{signal.explanation}</td>
               </tr>
@@ -44,4 +44,3 @@ export function RiskSignalTable({ signals, onSelect }: { signals: RiskSignal[]; 
 export function SignalArticleLink({ signal }: { signal: RiskSignal }) {
   return signal.article_url ? <Link className="inline-link" href={signal.article_url} rel="noreferrer" target="_blank">Open source article</Link> : <span>Source URL unavailable</span>;
 }
-

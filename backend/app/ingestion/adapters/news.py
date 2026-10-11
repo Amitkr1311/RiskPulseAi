@@ -48,7 +48,8 @@ class NewsRssAdapter:
     def configured(self) -> bool:
         return bool(self.settings.news_rss_url and self.settings.news_rss_url.strip())
 
-    def fetch(self, limit: int) -> list[Mapping[str, object]]:
+    def fetch(self, limit: int, offset: int = 0) -> list[Mapping[str, object]]:
+        del offset  # RSS pagination is provider-controlled; offset is for local replay sources.
         if not self.configured:
             from app.ingestion.errors import ProviderNotConfiguredError
 
@@ -106,6 +107,7 @@ class NewsRssAdapter:
                 url=record.get("url"),
                 published_at=record.get("published_at"),
                 is_demo=False,
+                is_historical=False,
             )
         except ProviderValidationError:
             raise

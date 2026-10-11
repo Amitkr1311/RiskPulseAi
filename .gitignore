@@ -27,6 +27,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Optional local research outputs
+backend/research/reports/*
+backend/research/market_data/*
+
 # Local database and editor files
 *.sqlite3
 *.db

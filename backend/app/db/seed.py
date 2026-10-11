@@ -4,7 +4,7 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Portfolio, PortfolioPosition, StressScenario
+from app.db.models import Portfolio, PortfolioPosition, StressScenario, StressTestResult
 from app.portfolio.scenarios import scenario_records
 from app.schemas.portfolio import validate_position_parameters
 from app.db.session import SessionLocal
@@ -38,12 +38,6 @@ def seed_demo_portfolio(db: Session) -> Portfolio:
             PortfolioPosition.is_demo.is_(True),
         )
     )
-    if legacy_derivative is not None and not any(
-        str(position["position_key"]) == "derivatives" for position in seed_data
-    ):
-        db.delete(legacy_derivative)
-        db.flush()
-
     for position_data in seed_data:
         position_key = str(position_data["position_key"])
         existing = db.scalar(
@@ -53,6 +47,18 @@ def seed_demo_portfolio(db: Session) -> Portfolio:
             )
         )
         if existing is not None:
+            # Only refresh rows owned by the deterministic demo seed. User-created
+            # or imported positions are intentionally left untouched.
+            if existing.is_demo:
+                asset_type = str(position_data["asset_type"])
+                parameters = validate_position_parameters(asset_type, position_data["valuation_parameters"])
+                existing.name = str(position_data["name"])
+                existing.asset_type = asset_type
+                existing.market_value = position_data["market_value"]
+                existing.currency = str(position_data.get("currency", "INR"))
+                existing.sector = position_data.get("sector")
+                existing.borrower = position_data.get("borrower")
+                existing.valuation_parameters = parameters.model_dump(mode="json")
             continue
         asset_type = str(position_data["asset_type"])
         parameters = validate_position_parameters(asset_type, position_data["valuation_parameters"])
@@ -71,6 +77,27 @@ def seed_demo_portfolio(db: Session) -> Portfolio:
             )
         )
     db.flush()
+
+    if legacy_derivative is not None and not any(
+        str(position["position_key"]) == "derivatives" for position in seed_data
+    ):
+        # Older demo runs may have immutable stress results referencing the
+        # single legacy derivative book. Repoint those historical rows to the
+        # replacement IRS position before removing the obsolete demo holding;
+        # the result snapshot still retains the original position identity.
+        replacement = db.scalar(
+            select(PortfolioPosition).where(
+                PortfolioPosition.portfolio_id == portfolio.id,
+                PortfolioPosition.position_key == "irs_5y",
+            )
+        )
+        if replacement is None:
+            raise RuntimeError("irs_5y replacement position was not seeded")
+        db.query(StressTestResult).filter(StressTestResult.position_id == legacy_derivative.id).update(
+            {StressTestResult.position_id: replacement.id}, synchronize_session="fetch"
+        )
+        db.delete(legacy_derivative)
+        db.flush()
     return portfolio
 
 

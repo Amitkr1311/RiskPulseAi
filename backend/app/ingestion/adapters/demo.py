@@ -16,14 +16,14 @@ class DemoAdapter:
     def configured(self) -> bool:
         return self.data_path.exists()
 
-    def fetch(self, limit: int) -> list[Mapping[str, object]]:
+    def fetch(self, limit: int, offset: int = 0) -> list[Mapping[str, object]]:
         if not self.configured:
             raise ProviderValidationError("demo fixture file is unavailable")
         with self.data_path.open(encoding="utf-8") as fixture_file:
             records = json.load(fixture_file)
         if not isinstance(records, list):
             raise ProviderValidationError("demo fixture file must contain a list")
-        return records[:limit]
+        return records[offset : offset + limit]
 
     def normalize(self, record: Mapping[str, object]) -> NormalizedArticle:
         try:
@@ -40,4 +40,3 @@ class DemoAdapter:
             raise
         except Exception as exc:
             raise ProviderValidationError("demo record is malformed") from exc
-

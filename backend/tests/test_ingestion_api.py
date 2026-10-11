@@ -38,6 +38,22 @@ def test_articles_endpoint_supports_pagination_and_source_filter(client, db_sess
     assert payload["items"][0]["external_id"] == "a1"
 
 
+def test_articles_endpoint_exposes_historical_social_metadata(client, db_session):
+    article = _article("social", "social-1", "Historical social post", datetime(2022, 1, 1, tzinfo=UTC))
+    article.is_historical = True
+    article.source_metadata = {"dataset": "Tweet Sentiment's Impact on Stock Returns", "stock_name": "TSLA"}
+    db_session.add(article)
+    db_session.commit()
+
+    response = client.get("/articles", params={"source": "social"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 1
+    assert payload["items"][0]["is_historical"] is True
+    assert payload["items"][0]["source_metadata"]["stock_name"] == "TSLA"
+
+
 def test_articles_endpoint_validates_pagination_and_missing_records(client):
     assert client.get("/articles", params={"limit": 0}).status_code == 422
     assert client.get("/articles", params={"limit": 101}).status_code == 422

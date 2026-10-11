@@ -16,6 +16,8 @@ class ArticleRead(BaseModel):
     ingested_at: datetime
     content_hash: str
     is_demo: bool
+    is_historical: bool
+    source_metadata: dict[str, object] | None
     processing_status: str
     processing_error: str | None
     processing_attempts: int

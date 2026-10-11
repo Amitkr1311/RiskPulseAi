@@ -42,11 +42,11 @@ class IngestionService:
         self.settings = settings
         self.sleep = sleep
 
-    def run(self, sources: list[str], limit: int | None = None) -> list[SourceRunResult]:
+    def run(self, sources: list[str], limit: int | None = None, offset: int = 0) -> list[SourceRunResult]:
         batch_limit = limit or self.settings.ingestion_batch_size
-        return [self.run_source(source, batch_limit) for source in sources]
+        return [self.run_source(source, batch_limit, offset) for source in sources]
 
-    def run_source(self, source: str, limit: int) -> SourceRunResult:
+    def run_source(self, source: str, limit: int, offset: int = 0) -> SourceRunResult:
         adapter = self.adapters.get(source)
         run = IngestionRun(source=source, status="running", started_at=datetime.now(UTC))
         self.db.add(run)
@@ -67,7 +67,7 @@ class IngestionService:
             )
 
         try:
-            records = self._fetch_with_retries(adapter, limit, run.id)
+            records = self._fetch_with_retries(adapter, limit, run.id, offset)
         except ProviderError as exc:
             status = "disabled" if exc.category == "not_configured" else "failed"
             return self._complete_run(run.id, status=status, error_category=exc.category, message=str(exc))
@@ -116,10 +116,10 @@ class IngestionService:
             error_category=error_category,
         )
 
-    def _fetch_with_retries(self, adapter: SourceAdapter, limit: int, run_id: int) -> list[dict[str, object]]:
+    def _fetch_with_retries(self, adapter: SourceAdapter, limit: int, run_id: int, offset: int) -> list[dict[str, object]]:
         for attempt in range(self.settings.ingestion_max_retries + 1):
             try:
-                return [dict(record) for record in adapter.fetch(limit)]
+                return [dict(record) for record in adapter.fetch(limit, offset)]
             except ProviderError as exc:
                 if not exc.retryable or attempt >= self.settings.ingestion_max_retries:
                     raise
@@ -201,4 +201,3 @@ class IngestionService:
             failed=run.records_failed,
             error_category=run.error_category,
         )
-

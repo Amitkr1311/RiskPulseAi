@@ -26,7 +26,8 @@ class RedditAdapter:
             and self.settings.reddit_subreddits
         )
 
-    def fetch(self, limit: int) -> list[Mapping[str, object]]:
+    def fetch(self, limit: int, offset: int = 0) -> list[Mapping[str, object]]:
+        del offset  # Reddit pagination uses provider cursors, not row offsets.
         if not self.configured:
             raise ProviderNotConfiguredError("Reddit access token or subreddit configuration is missing")
         token = self.settings.reddit_access_token.get_secret_value()
@@ -96,6 +97,7 @@ class RedditAdapter:
                 url=record.get("url"),
                 published_at=record.get("published_at"),
                 is_demo=False,
+                is_historical=False,
             )
         except ProviderValidationError:
             raise

@@ -16,6 +16,8 @@ export type Article = {
   ingested_at: string;
   content_hash: string;
   is_demo: boolean;
+  is_historical: boolean;
+  source_metadata: Record<string, unknown> | null;
   processing_status: string;
   processing_error: string | null;
   processing_attempts: number;
@@ -80,6 +82,57 @@ export type SignalTaxonomy = {
   event_groups: Record<string, string[]>;
   event_types: string[];
   entity_types: string[];
+};
+
+export type SentimentEvaluationReport = {
+  schema_version: string;
+  dataset: { name: string; configuration: string; source: string; license: string };
+  model: { backend: string; identifier: string; label_mapping: Record<string, string>; score_definition: string; runtime_marker: string };
+  evaluation_date: string;
+  seed: number;
+  metrics: {
+    accuracy: number;
+    macro_f1: number;
+    evaluated_examples: number;
+    class_distribution: Record<string, number>;
+    per_class: Record<string, { precision: number; recall: number; f1: number }>;
+    confusion_matrix: Record<string, Record<string, number>>;
+  };
+  limitations: string[];
+};
+
+export type SentimentEvaluationResponse = {
+  available: boolean;
+  report: SentimentEvaluationReport | null;
+  message: string;
+};
+
+export type MarketResearchResponse = {
+  symbol: string;
+  start: string;
+  end: string;
+  retrieved_at: string;
+  price_convention: string;
+  prices: { trading_date: string; close: number }[];
+};
+
+export type EventWindowResearchResponse = {
+  series: MarketResearchResponse;
+  observations: {
+    symbol: string;
+    event_timestamp: string;
+    event_date: string;
+    mapped_trading_date: string;
+    mapping_policy: string;
+    event_category: string;
+    scenario_name: string;
+    assumed_shock: number;
+    window_trading_days: number;
+    observation_date: string;
+    observed_return: number;
+    difference_observed_minus_assumed: number;
+  }[];
+  limitations: string[];
 };
 
 export type SourceStatus = {
@@ -284,6 +337,11 @@ export const api = {
   getSignals: (params: Record<string, string | number | boolean | undefined> = {}) =>
     request<Page<RiskSignal>>(`/signals${query(params)}`),
   getSignalTaxonomy: () => request<SignalTaxonomy>("/signals/taxonomy"),
+  getSentimentEvaluation: () => request<SentimentEvaluationResponse>("/research/sentiment-evaluation"),
+  getMarketResearch: (params: Record<string, string | number | undefined>) =>
+    request<MarketResearchResponse>(`/research/market-data${query(params)}`),
+  getEventWindowResearch: (params: Record<string, string | number | undefined>) =>
+    request<EventWindowResearchResponse>(`/research/event-window${query(params)}`),
   getSignal: (id: number) => request<RiskSignal>(`/signals/${id}`),
   getPortfolio: () => request<Portfolio>("/portfolio"),
   getPortfolioSummary: () => request<PortfolioSummary>("/portfolio/summary"),

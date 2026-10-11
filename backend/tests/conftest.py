@@ -34,6 +34,7 @@ def client(db_session: Session) -> TestClient:
 
     test_settings = Settings(
         news_rss_url=None,
+        social_csv_path="missing-social.csv",
         reddit_access_token=None,
         ingestion_api_key=None,
         ingestion_live_enabled=False,

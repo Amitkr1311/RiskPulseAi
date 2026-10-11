@@ -1,16 +1,16 @@
 [
   {
     "position_key": "corporate_loans",
-    "name": "Corporate loan book",
+    "name": "Synthetic loan exposure proxy (recurring transactions)",
     "asset_type": "corporate_loan",
     "market_value": "400000000.00",
     "currency": "INR",
-    "sector": "diversified",
-    "borrower": "Synthetic corporate borrowers",
+    "sector": "financials",
+    "borrower": "Synthetic proxy; not transaction-level loan data",
     "valuation_parameters": {
       "basis": "exposure",
       "borrower_group_id": "synthetic-borrower-group",
-      "sector": "diversified",
+      "sector": "financials",
       "pd": "0.025",
       "lgd": "0.60",
       "recovery_rate": "0.40",
@@ -19,12 +19,12 @@
   },
   {
     "position_key": "government_bonds",
-    "name": "Government bond book",
+    "name": "Synthetic government bond allocation",
     "asset_type": "government_bond",
     "market_value": "250000000.00",
     "currency": "INR",
     "sector": "sovereign",
-    "borrower": "Government of India",
+    "borrower": "Synthetic allocation; no transaction-level bond holding",
     "valuation_parameters": {
       "basis": "market_value",
       "issuer": "Government of India",
@@ -37,16 +37,16 @@
   },
   {
     "position_key": "corporate_bonds",
-    "name": "Corporate bond book",
+    "name": "Synthetic corporate bond allocation",
     "asset_type": "corporate_bond",
     "market_value": "200000000.00",
     "currency": "INR",
-    "sector": "diversified",
-    "borrower": "Synthetic issuers",
+    "sector": "real_estate_services",
+    "borrower": "Synthetic allocation; no transaction-level bond holding",
     "valuation_parameters": {
       "basis": "market_value",
       "issuer": "Synthetic Investment Grade Issuer",
-      "sector": "diversified",
+      "sector": "real_estate_services",
       "credit_rating": "AA",
       "modified_duration": "4.0",
       "convexity": "22.0",
@@ -57,7 +57,7 @@
   },
   {
     "position_key": "equities",
-    "name": "Equity book",
+    "name": "Synthetic equity sector allocation",
     "asset_type": "equity",
     "market_value": "100000000.00",
     "currency": "INR",
@@ -65,16 +65,16 @@
     "borrower": null,
     "valuation_parameters": {
       "basis": "market_value",
-      "ticker": "SYNBANK",
-      "instrument_name": "Synthetic Banking Equity Basket",
+      "ticker": "SYNSECTOR",
+      "instrument_name": "Synthetic sector basket informed by transaction categories",
       "sector": "financials",
       "beta": "1.10",
-      "market_reference": "synthetic broad market index"
+      "market_reference": "transaction-category mix; not a reported holding"
     }
   },
   {
     "position_key": "irs_5y",
-    "name": "5Y INR interest-rate swap",
+    "name": "Synthetic 5Y INR interest-rate swap",
     "asset_type": "derivative",
     "market_value": "15000000.00",
     "currency": "INR",
@@ -97,7 +97,7 @@
   },
   {
     "position_key": "irs_10y",
-    "name": "10Y INR interest-rate swap",
+    "name": "Synthetic 10Y INR interest-rate swap",
     "asset_type": "derivative",
     "market_value": "10000000.00",
     "currency": "INR",
@@ -120,7 +120,7 @@
   },
   {
     "position_key": "fx_forward_usdinr",
-    "name": "USD/INR FX forward",
+    "name": "Synthetic USD/INR FX forward",
     "asset_type": "derivative",
     "market_value": "15000000.00",
     "currency": "INR",
@@ -142,7 +142,7 @@
   },
   {
     "position_key": "fx_forward_eurinr",
-    "name": "EUR/INR FX forward",
+    "name": "Synthetic EUR/INR FX forward",
     "asset_type": "derivative",
     "market_value": "10000000.00",
     "currency": "INR",

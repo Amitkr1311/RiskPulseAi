@@ -64,3 +64,25 @@ def test_pipeline_batch_only_processes_requested_records(db_session) -> None:
     assert result.requested == 2
     assert result.processed == 2
     assert db_session.query(RiskSignal).count() == 2
+
+
+def test_historical_social_article_flows_into_social_risk_signal(db_session) -> None:
+    article = _article("Tesla outlook", "Tesla earnings outlook improved after growth.", source="social")
+    article.is_historical = True
+    article.source_metadata = {
+        "dataset": "Tweet Sentiment's Impact on Stock Returns",
+        "replay": True,
+        "stock_name": "TSLA",
+        "company_name": "Tesla, Inc.",
+    }
+    db_session.add(article)
+    db_session.commit()
+
+    result = NLPService(db_session, Settings()).process_article(article.id)
+
+    signal = db_session.get(RiskSignal, result.signal_id)
+    assert result.status == "processed"
+    assert signal is not None
+    assert signal.article.source == "social"
+    assert signal.article.is_historical is True
+    assert signal.article.source_metadata["stock_name"] == "TSLA"
