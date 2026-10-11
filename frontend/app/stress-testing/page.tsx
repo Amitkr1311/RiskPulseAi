@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { ErrorState, EmptyState, LoadingState, PageHeader } from "@/components/ui";
 import { api, type RiskSignal, type StressRunDetail, type StressRunSummary, type StressScenario } from "@/lib/api";
@@ -23,6 +24,28 @@ export default function StressTestingPage() {
     () => scenarios.find((scenario) => scenario.scenario_id === scenarioId) ?? null,
     [scenarioId, scenarios],
   );
+
+  const assetClassChartData = useMemo(() => {
+    if (!detail) return [];
+    const grouped = new Map<string, { assetClass: string; before: number; after: number }>();
+    detail.results.forEach((result) => {
+      const key = result.asset_type ?? "other";
+      const current = grouped.get(key) ?? { assetClass: titleCase(key), before: 0, after: 0 };
+      current.before += Number(result.position_value_before);
+      current.after += Number(result.position_value_after);
+      grouped.set(key, current);
+    });
+    return [...grouped.values()];
+  }, [detail]);
+
+  const topLosses = useMemo(
+    () => detail?.results.filter((result) => Number(result.contribution) < 0)
+      .sort((left, right) => Number(left.contribution) - Number(right.contribution))
+      .slice(0, 5) ?? [],
+    [detail],
+  );
+
+  const topLossIds = useMemo(() => new Set(topLosses.map((result) => result.result_id)), [topLosses]);
 
   async function load() {
     setLoading(true);
@@ -112,7 +135,7 @@ export default function StressTestingPage() {
       </section>
 
       {detail && <section className="section-block" id="stress-result" ref={detailRef}>
-        <div className="section-heading"><div><div className="section-kicker">Selected simulation result</div><h2>{detail.scenario_name}</h2></div><span className={"status-label " + (detail.status === "completed" ? "positive" : "muted")}>{titleCase(detail.status)}</span></div>
+        <div className="section-heading" style={{ alignItems: "flex-start" }}><div><div className="section-kicker">Selected simulation result</div><h2>{detail.scenario_name}</h2><p className="section-copy" style={{ marginTop: 7 }}>{detail.trigger_signal ? `${titleCase(detail.trigger_signal.event_type)} · ${detail.trigger_signal.article_title}` : "Manual scenario run"}</p></div><div style={{ alignItems: "flex-end", display: "flex", flexDirection: "column", gap: 8 }}><span className={"status-label " + (detail.status === "completed" ? "positive" : "muted")}>{titleCase(detail.status)}</span><strong className="negative-value" style={{ fontSize: ".82rem" }}>Loss {formatPercent(detail.loss_percentage)}</strong></div></div>
         <div className="metric-grid">
           <div className="metric-card"><span>Base value</span><strong>{formatInr(detail.portfolio_value_before)}</strong></div>
           <div className="metric-card"><span>Stressed value</span><strong>{formatInr(detail.portfolio_value_after)}</strong></div>
@@ -120,8 +143,12 @@ export default function StressTestingPage() {
           <div className="metric-card"><span>Loss percentage</span><strong>{formatPercent(detail.loss_percentage)}</strong></div>
         </div>
         <p className="section-copy">Reconciliation: {detail.reconciliation.reconciled ? "passed" : "failed"} / position P&amp;L sum {formatInr(detail.reconciliation.position_pnl_sum)} / difference {formatInr(detail.reconciliation.difference)}</p>
-        {detail.trigger_signal && <p className="section-copy">Trigger: #{detail.trigger_signal.id} / {titleCase(detail.trigger_signal.event_type)} / {detail.trigger_signal.article_title}</p>}
-        <div className="table-wrap"><table className="data-table"><thead><tr><th>Position</th><th>Asset class</th><th>Status</th><th>Base value</th><th>Stressed value</th><th>Contribution</th></tr></thead><tbody>{detail.results.map((result) => <tr key={result.result_id}><td><strong>{result.position_name ?? result.position_key}</strong><span className="cell-subtext">{result.explanation}</span></td><td>{titleCase(result.asset_type ?? "")}</td><td>{titleCase(result.inclusion_status)}</td><td>{formatInr(result.position_value_before)}</td><td>{formatInr(result.position_value_after)}</td><td className={Number(result.contribution) < 0 ? "negative-value" : "positive-value"}>{formatInr(result.contribution)}</td></tr>)}</tbody></table></div>
+        {detail.trigger_signal && <p className="section-copy">Triggering article #{detail.trigger_signal.id}: <a className="inline-link" href={detail.trigger_signal.article_url ?? `/news?search=${encodeURIComponent(detail.trigger_signal.article_title)}`}>{detail.trigger_signal.article_title}</a></p>}
+        <div style={{ display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1.35fr) minmax(280px, .65fr)", margin: "25px 0" }}>
+          <section style={{ border: "1px solid var(--ink-12)", padding: 18 }}><div className="section-kicker">Before / after</div><h3>Value by asset class</h3><div style={{ height: 320, marginTop: 12 }}><ResponsiveContainer height={320} width="100%"><BarChart data={assetClassChartData} margin={{ top: 12, right: 12, left: 12, bottom: 8 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(17,24,39,.12)" /><XAxis dataKey="assetClass" tick={{ fill: "#111827", fontSize: 11 }} /><YAxis tick={{ fill: "#6b7280", fontSize: 10 }} tickFormatter={(value: number) => `${Math.round(value / 10000000)}cr`} /><Tooltip formatter={(value: number) => formatInr(String(value))} /><Legend /><Bar dataKey="before" fill="#94a3b8" name="Before" /><Bar dataKey="after" fill="#0d9488" name="After" /></BarChart></ResponsiveContainer></div></section>
+          <section style={{ border: "1px solid var(--ink-12)", padding: 18 }}><div className="section-kicker">Largest losses</div><h3>Top 5 positions</h3>{topLosses.length ? <div style={{ marginTop: 14 }}>{topLosses.map((result, index) => <div key={result.result_id} style={{ alignItems: "center", borderBottom: "1px solid var(--ink-08)", display: "grid", gap: 10, gridTemplateColumns: "24px 1fr auto", padding: "12px 0" }}><span style={{ alignItems: "center", background: "var(--teal-08)", color: "var(--teal)", display: "inline-flex", fontSize: ".7rem", fontWeight: 750, height: 22, justifyContent: "center", width: 22 }}>{index + 1}</span><div><strong>{result.position_name ?? result.position_key}</strong><span className="cell-subtext">{titleCase(result.asset_type ?? "")}</span></div><strong className="negative-value">{formatInr(result.contribution)}</strong></div>)}</div> : <p className="section-copy">No position-level losses were recorded.</p>}</section>
+        </div>
+        <div className="table-wrap"><table className="data-table"><thead><tr><th>Position</th><th>Asset class</th><th>Status</th><th>Base value</th><th>Stressed value</th><th>Contribution</th></tr></thead><tbody>{detail.results.map((result) => <tr style={topLossIds.has(result.result_id) ? { background: "rgb(180 35 24 / 4%)" } : undefined} key={result.result_id}><td><strong>{result.position_name ?? result.position_key}</strong><span className="cell-subtext">{result.explanation}</span></td><td>{titleCase(result.asset_type ?? "")}</td><td>{titleCase(result.inclusion_status)}</td><td>{formatInr(result.position_value_before)}</td><td>{formatInr(result.position_value_after)}</td><td className={Number(result.contribution) < 0 ? "negative-value" : "positive-value"}>{formatInr(result.contribution)}</td></tr>)}</tbody></table></div>
       </section>}
 
       <section className="section-block">
@@ -131,4 +158,3 @@ export default function StressTestingPage() {
     </>
   );
 }
-
