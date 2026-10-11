@@ -3,7 +3,7 @@
 **Candidate Name:** Amit Kumar<br>
 **College Email ID:** cs23b1004@iiitr.ac.in<br>
 **College / Campus:** Indian Institute of Information Technology Raichur (IIIT Raichur)<br>
-**Demo Video Link:** [Add unlisted YouTube link]<br>
+**Demo Video Link:** [Watch the RiskPulse AI demo](https://youtu.be/Z8pg3u9byT4)<br>
 **Slide Deck Link:** [Presentation PDF](https://www.dropbox.com/scl/fi/xbrcdkxjiz361ggco2djz/Amit_Kumar_IIITR_Presentation.pdf?rlkey=ezu5ntjujtpfjewinfzv2q8ne&st=0lzmntdi&dl=0) <br>
 
 RiskPulse AI is a financial risk intelligence and portfolio stress-testing prototype. It converts financial news and historical social posts into traceable risk signals, maps those signals to a synthetic portfolio, and runs deterministic scenario analysis when a signal is material.

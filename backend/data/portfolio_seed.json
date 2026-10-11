@@ -1,9 +1,9 @@
 [
   {
     "position_key": "corporate_loans",
-    "name": "Synthetic loan reserve (transaction categories)",
+    "name": "Synthetic loan exposure proxy (recurring transactions)",
     "asset_type": "corporate_loan",
-    "market_value": "200000000.00",
+    "market_value": "400000000.00",
     "currency": "INR",
     "sector": "financials",
     "borrower": "Synthetic proxy; not transaction-level loan data",
@@ -37,12 +37,12 @@
   },
   {
     "position_key": "corporate_bonds",
-    "name": "Synthetic corporate bond reserve",
+    "name": "Synthetic corporate bond allocation",
     "asset_type": "corporate_bond",
-    "market_value": "100000000.00",
+    "market_value": "200000000.00",
     "currency": "INR",
     "sector": "real_estate_services",
-    "borrower": "Synthetic allocation; not issuer-level data",
+    "borrower": "Synthetic allocation; no transaction-level bond holding",
     "valuation_parameters": {
       "basis": "market_value",
       "issuer": "Synthetic Investment Grade Issuer",
@@ -57,259 +57,19 @@
   },
   {
     "position_key": "equities",
-    "name": "Legacy synthetic equity sector allocation",
+    "name": "Synthetic equity sector allocation",
     "asset_type": "equity",
-    "market_value": "0.00",
+    "market_value": "100000000.00",
     "currency": "INR",
     "sector": "financials",
     "borrower": null,
     "valuation_parameters": {
       "basis": "market_value",
       "ticker": "SYNSECTOR",
-      "instrument_name": "Legacy synthetic sector basket",
+      "instrument_name": "Synthetic sector basket informed by transaction categories",
       "sector": "financials",
       "beta": "1.10",
-      "market_reference": "replaced by named demo exposures"
-    }
-  },
-  {
-    "position_key": "tesla_corporate_loan",
-    "name": "Tesla corporate loan exposure",
-    "asset_type": "corporate_loan",
-    "market_value": "50000000.00",
-    "currency": "INR",
-    "sector": "automotive_technology",
-    "borrower": "Tesla",
-    "valuation_parameters": {
-      "basis": "exposure",
-      "borrower_group_id": "Tesla",
-      "borrower": "Tesla, Inc.",
-      "issuer": "Tesla",
-      "ticker": "TSLA",
-      "sector": "automotive_technology",
-      "pd": "0.025",
-      "lgd": "0.60",
-      "recovery_rate": "0.40",
-      "remaining_tenor_years": "3.0"
-    }
-  },
-  {
-    "position_key": "apple_corporate_loan",
-    "name": "Apple corporate loan exposure",
-    "asset_type": "corporate_loan",
-    "market_value": "50000000.00",
-    "currency": "INR",
-    "sector": "technology",
-    "borrower": "Apple",
-    "valuation_parameters": {
-      "basis": "exposure",
-      "borrower_group_id": "Apple",
-      "borrower": "Apple Inc.",
-      "issuer": "Apple",
-      "ticker": "AAPL",
-      "sector": "technology",
-      "pd": "0.025",
-      "lgd": "0.60",
-      "recovery_rate": "0.40",
-      "remaining_tenor_years": "3.0"
-    }
-  },
-  {
-    "position_key": "microsoft_corporate_loan",
-    "name": "Microsoft corporate loan exposure",
-    "asset_type": "corporate_loan",
-    "market_value": "50000000.00",
-    "currency": "INR",
-    "sector": "technology",
-    "borrower": "Microsoft",
-    "valuation_parameters": {
-      "basis": "exposure",
-      "borrower_group_id": "Microsoft",
-      "borrower": "Microsoft Corporation",
-      "issuer": "Microsoft",
-      "ticker": "MSFT",
-      "sector": "technology",
-      "pd": "0.025",
-      "lgd": "0.60",
-      "recovery_rate": "0.40",
-      "remaining_tenor_years": "3.0"
-    }
-  },
-  {
-    "position_key": "hdfc_bank_corporate_loan",
-    "name": "HDFC Bank corporate loan exposure",
-    "asset_type": "corporate_loan",
-    "market_value": "50000000.00",
-    "currency": "INR",
-    "sector": "financials",
-    "borrower": "HDFC Bank",
-    "valuation_parameters": {
-      "basis": "exposure",
-      "borrower_group_id": "HDFC Bank",
-      "borrower": "HDFC Bank",
-      "issuer": "HDFC Bank",
-      "ticker": "HDFCBANK",
-      "sector": "financials",
-      "pd": "0.025",
-      "lgd": "0.60",
-      "recovery_rate": "0.40",
-      "remaining_tenor_years": "3.0"
-    }
-  },
-  {
-    "position_key": "tesla_corporate_bond",
-    "name": "Tesla corporate bond exposure",
-    "asset_type": "corporate_bond",
-    "market_value": "25000000.00",
-    "currency": "INR",
-    "sector": "automotive_technology",
-    "borrower": "Tesla",
-    "valuation_parameters": {
-      "basis": "market_value",
-      "issuer": "Tesla",
-      "borrower": "Tesla, Inc.",
-      "ticker": "TSLA",
-      "sector": "automotive_technology",
-      "credit_rating": "AA",
-      "modified_duration": "4.0",
-      "convexity": "22.0",
-      "credit_spread_duration": "3.5",
-      "baseline_credit_spread": "0.0180",
-      "spread_unit": "decimal_rate"
-    }
-  },
-  {
-    "position_key": "apple_corporate_bond",
-    "name": "Apple corporate bond exposure",
-    "asset_type": "corporate_bond",
-    "market_value": "25000000.00",
-    "currency": "INR",
-    "sector": "technology",
-    "borrower": "Apple",
-    "valuation_parameters": {
-      "basis": "market_value",
-      "issuer": "Apple",
-      "borrower": "Apple Inc.",
-      "ticker": "AAPL",
-      "sector": "technology",
-      "credit_rating": "AA",
-      "modified_duration": "4.0",
-      "convexity": "22.0",
-      "credit_spread_duration": "3.5",
-      "baseline_credit_spread": "0.0180",
-      "spread_unit": "decimal_rate"
-    }
-  },
-  {
-    "position_key": "microsoft_corporate_bond",
-    "name": "Microsoft corporate bond exposure",
-    "asset_type": "corporate_bond",
-    "market_value": "25000000.00",
-    "currency": "INR",
-    "sector": "technology",
-    "borrower": "Microsoft",
-    "valuation_parameters": {
-      "basis": "market_value",
-      "issuer": "Microsoft",
-      "borrower": "Microsoft Corporation",
-      "ticker": "MSFT",
-      "sector": "technology",
-      "credit_rating": "AA",
-      "modified_duration": "4.0",
-      "convexity": "22.0",
-      "credit_spread_duration": "3.5",
-      "baseline_credit_spread": "0.0180",
-      "spread_unit": "decimal_rate"
-    }
-  },
-  {
-    "position_key": "hdfc_bank_corporate_bond",
-    "name": "HDFC Bank corporate bond exposure",
-    "asset_type": "corporate_bond",
-    "market_value": "25000000.00",
-    "currency": "INR",
-    "sector": "financials",
-    "borrower": "HDFC Bank",
-    "valuation_parameters": {
-      "basis": "market_value",
-      "issuer": "HDFC Bank",
-      "borrower": "HDFC Bank",
-      "ticker": "HDFCBANK",
-      "sector": "financials",
-      "credit_rating": "AA",
-      "modified_duration": "4.0",
-      "convexity": "22.0",
-      "credit_spread_duration": "3.5",
-      "baseline_credit_spread": "0.0180",
-      "spread_unit": "decimal_rate"
-    }
-  },
-  {
-    "position_key": "tesla_equity",
-    "name": "Tesla common equity",
-    "asset_type": "equity",
-    "market_value": "25000000.00",
-    "currency": "INR",
-    "sector": "automotive_technology",
-    "borrower": null,
-    "valuation_parameters": {
-      "basis": "market_value",
-      "ticker": "TSLA",
-      "instrument_name": "Tesla",
-      "sector": "automotive_technology",
-      "beta": "1.10",
-      "market_reference": "demo named exposure; not a live price holding"
-    }
-  },
-  {
-    "position_key": "apple_equity",
-    "name": "Apple common equity",
-    "asset_type": "equity",
-    "market_value": "25000000.00",
-    "currency": "INR",
-    "sector": "technology",
-    "borrower": null,
-    "valuation_parameters": {
-      "basis": "market_value",
-      "ticker": "AAPL",
-      "instrument_name": "Apple",
-      "sector": "technology",
-      "beta": "1.10",
-      "market_reference": "demo named exposure; not a live price holding"
-    }
-  },
-  {
-    "position_key": "microsoft_equity",
-    "name": "Microsoft common equity",
-    "asset_type": "equity",
-    "market_value": "25000000.00",
-    "currency": "INR",
-    "sector": "technology",
-    "borrower": null,
-    "valuation_parameters": {
-      "basis": "market_value",
-      "ticker": "MSFT",
-      "instrument_name": "Microsoft",
-      "sector": "technology",
-      "beta": "1.10",
-      "market_reference": "demo named exposure; not a live price holding"
-    }
-  },
-  {
-    "position_key": "hdfc_bank_equity",
-    "name": "HDFC Bank common equity",
-    "asset_type": "equity",
-    "market_value": "25000000.00",
-    "currency": "INR",
-    "sector": "financials",
-    "borrower": null,
-    "valuation_parameters": {
-      "basis": "market_value",
-      "ticker": "HDFCBANK",
-      "instrument_name": "HDFC Bank",
-      "sector": "financials",
-      "beta": "1.10",
-      "market_reference": "demo named exposure; not a live price holding"
+      "market_reference": "transaction-category mix; not a reported holding"
     }
   },
   {
