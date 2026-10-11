@@ -52,7 +52,7 @@ The detailed notes are in [`docs/architecture.md`](docs/architecture.md).
 ### Current repository structure
 
 ```text
-RiskPulseAi/
+iiitr-amit-kumar-hackathon/
 ├── README.md
 ├── LICENSE
 ├── docker-compose.yml
@@ -97,8 +97,8 @@ The CSV files are local/user-supplied data and are not redistributed as a claim 
 The repository keeps backend dependencies in `backend/requirements.txt` and frontend dependencies in `frontend/package.json`.
 
 ```bash
-git clone <your-repo-url>
-cd <repo-folder>
+git clone <your-repo-url> iiitr-amit-kumar-hackathon
+cd iiitr-amit-kumar-hackathon
 
 cp .env.example .env
 cp frontend/.env.example frontend/.env.local
@@ -117,7 +117,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 In a second terminal, from the repository root:
 
 ```bash
-cd <repo-folder>/frontend
+cd iiitr-amit-kumar-hackathon/frontend
 npm install
 npm run dev
 ```
