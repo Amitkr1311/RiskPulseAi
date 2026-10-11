@@ -1,10 +1,3 @@
-export function formatNumber(value: number | string | null | undefined, maximumFractionDigits = 0): string {
-  if (value === null || value === undefined || value === "") return "Not available";
-  const numeric = typeof value === "string" ? Number(value) : value;
-  if (!Number.isFinite(numeric)) return "Not available";
-  return new Intl.NumberFormat("en-IN", { maximumFractionDigits }).format(numeric);
-}
-
 export function formatInr(value: number | string | null | undefined, unit?: "crore"): string {
   if (value === null || value === undefined || value === "") return "Not available";
   const numeric = typeof value === "string" ? Number(value) : value;

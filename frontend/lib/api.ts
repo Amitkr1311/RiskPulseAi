@@ -1,10 +1,3 @@
-export type HealthStatus = {
-  status: "healthy" | "degraded";
-  service: string;
-  version: string;
-  database: { status: "healthy" | "unavailable" };
-};
-
 export type Article = {
   id: number;
   source: string;
@@ -181,17 +174,6 @@ export type SocialReplayStatus = {
   last_error: string | null;
 };
 
-export type NlpStatus = {
-  sentiment_backend: string;
-  sentiment_model_id: string;
-  model_available: boolean;
-  model_download_allowed: boolean;
-  pending_articles: number;
-  failed_articles: number;
-  processed_articles: number;
-  signal_count: number;
-};
-
 export type PortfolioAllocation = {
   asset_class: string;
   market_value_inr: string;
@@ -302,16 +284,6 @@ export type StressRunDetail = StressRunSummary & {
   }[];
 };
 
-export type StressEligibility = {
-  signal_id: number;
-  eligible: boolean;
-  impact_score: number;
-  impact_threshold: number;
-  matching_scenarios: string[];
-  reasons: string[];
-  relevance_assessment: string;
-};
-
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export class ApiError extends Error {
@@ -350,7 +322,6 @@ function query(params: Record<string, string | number | boolean | undefined>): s
 }
 
 export const api = {
-  getHealth: () => request<HealthStatus>("/health"),
   getDashboardSummary: () => request<DashboardSummary>("/dashboard/summary"),
   getIngestionStatus: () => request<IngestionStatus>("/ingestion/status"),
   getReplayStatus: () => request<SocialReplayStatus>("/replay/status"),
@@ -360,18 +331,14 @@ export const api = {
   resumeReplay: () => request<SocialReplayStatus>("/api/replay/resume", { method: "POST" }),
   stopReplay: () => request<SocialReplayStatus>("/api/replay/stop", { method: "POST" }),
   resetReplay: () => request<SocialReplayStatus>("/api/replay/reset", { method: "POST" }),
-  getNlpStatus: () => request<NlpStatus>("/nlp/status"),
   getArticles: (params: Record<string, string | number | undefined> = {}) =>
     request<Page<Article>>(`/articles${query(params)}`),
   getSignals: (params: Record<string, string | number | boolean | undefined> = {}) =>
     request<Page<RiskSignal>>(`/signals${query(params)}`),
   getSignalTaxonomy: () => request<SignalTaxonomy>("/signals/taxonomy"),
   getSentimentEvaluation: () => request<SentimentEvaluationResponse>("/research/sentiment-evaluation"),
-  getMarketResearch: (params: Record<string, string | number | undefined>) =>
-    request<MarketResearchResponse>(`/research/market-data${query(params)}`),
   getEventWindowResearch: (params: Record<string, string | number | undefined>) =>
     request<EventWindowResearchResponse>(`/research/event-window${query(params)}`),
-  getSignal: (id: number) => request<RiskSignal>(`/signals/${id}`),
   getPortfolio: () => request<Portfolio>("/portfolio"),
   getPortfolioSummary: () => request<PortfolioSummary>("/portfolio/summary"),
   getPortfolioPositions: (params: Record<string, string | number | undefined> = {}) =>
@@ -382,6 +349,4 @@ export const api = {
   getStressRun: (id: number) => request<StressRunDetail>(`/stress-testing/runs/${id}`),
   runStressTest: (body: { portfolio_id?: number; scenario_id: string; risk_signal_id?: number; trigger_mode?: string; fresh_run?: boolean }) =>
     request<StressRunDetail>('/stress-testing/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
-  getStressEligibility: (signalId: number, portfolioId?: number) =>
-    request<StressEligibility>(`/stress-testing/signals/${signalId}/eligibility${query({ portfolio_id: portfolioId })}`),
 };

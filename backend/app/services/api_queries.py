@@ -16,10 +16,6 @@ def validate_range(start: datetime | None, end: datetime | None, name: str) -> N
         raise QueryRangeError(f"{name}_from must be less than or equal to {name}_to")
 
 
-def as_utc(value: datetime | None) -> datetime | None:
-    return _as_utc(value) if value is not None else None
-
-
 def article_query(
     *,
     source: str | None = None,

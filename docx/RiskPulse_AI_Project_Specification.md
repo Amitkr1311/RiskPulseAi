@@ -352,7 +352,7 @@ RISKPULSE AI  |  PROJECT SPECIFICATION
 
 ## **15. Repository Structure** 
 
-riskpulse-ai/ frontend/ app/ components/ lib/ types/ backend/ app/ api/ core/ db/ models/ schemas/ services/ ingestion/ nlp/ stress_testing/ main.py migrations/ tests/ data/ demo_articles.json portfolio_seed.json scenarios.json docs/ PROJECT_SPEC.md architecture.md api.md demo-script.md docker-compose.yml .env.example .gitignore README.md 
+riskpulse-ai/ frontend/ app/ components/ lib/ types/ backend/ app/ api/ core/ db/ models/ schemas/ services/ ingestion/ nlp/ stress_testing/ main.py migrations/ tests/ data/ demo_articles.json entity_aliases.json portfolio_seed.json docs/ architecture.md api.md nlp.md portfolio.md research.md stress_testing.md docker-compose.yml .env.example .gitignore README.md
 
 ## **16. Milestone-by-Milestone Build Plan** 
 
@@ -567,4 +567,3 @@ Do not overwrite useful existing work. Do not claim unimplemented scaffolding is
 Begin with repository inspection and Milestone 1 only. 
 
 Hackathon implementation plan • Version 1.0 
-
