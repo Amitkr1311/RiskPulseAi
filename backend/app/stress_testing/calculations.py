@@ -150,11 +150,67 @@ def equity_valuation(base_value: Decimal, parameters: EquityParameters, return_s
     )
 
 
+def interest_rate_swap_valuation(
+    base_value: Decimal,
+    parameters: DerivativeParameters,
+    rate_shock_bps: Decimal,
+) -> ValuationResult:
+    duration = parameters.duration_years or parameters.tenor_years
+    if duration is None:
+        raise ValueError("interest rate swap duration is required")
+    rate_shock = basis_points_to_decimal(rate_shock_bps)
+    direction = Decimal("-1") if parameters.pay_receive == "receive_fixed" else Decimal("1")
+    pnl = money(parameters.notional_exposure_inr * duration * rate_shock * direction)
+    stressed_value = money(base_value + pnl)
+    return ValuationResult(
+        stressed_value,
+        money(stressed_value - base_value),
+        "interest_rate_swap_notional_duration_rate_shock",
+        "Interest-rate swap P&L is approximated as notional × duration × rate shock; pay-fixed swaps gain when rates rise.",
+        {
+            "formula_version": FORMULA_VERSION,
+            "base_market_value_inr": str(base_value),
+            "notional_exposure_inr": str(parameters.notional_exposure_inr),
+            "duration_years": str(duration),
+            "rate_shock_bps": str(rate_shock_bps),
+            "rate_shock_decimal": str(rate_shock),
+            "pay_receive": parameters.pay_receive or "pay_fixed",
+            "notional_duration_rate_change_inr": str(pnl),
+        },
+    )
+
+
+def fx_forward_valuation(
+    base_value: Decimal,
+    parameters: DerivativeParameters,
+    fx_return_shock: Decimal,
+) -> ValuationResult:
+    pnl = money(parameters.notional_exposure_inr * fx_return_shock)
+    stressed_value = money(base_value + pnl)
+    return ValuationResult(
+        stressed_value,
+        money(stressed_value - base_value),
+        "fx_forward_notional_fx_shock",
+        "FX-forward P&L is approximated as notional × the scenario FX return shock.",
+        {
+            "formula_version": FORMULA_VERSION,
+            "base_market_value_inr": str(base_value),
+            "notional_exposure_inr": str(parameters.notional_exposure_inr),
+            "notional_currency": parameters.notional_currency,
+            "fx_pair": parameters.fx_pair,
+            "forward_fx_rate": str(parameters.forward_fx_rate),
+            "spot_fx_rate": str(parameters.spot_fx_rate) if parameters.spot_fx_rate is not None else None,
+            "fx_return_shock": str(fx_return_shock),
+        },
+    )
+
+
 def derivative_valuation(
     base_value: Decimal,
     parameters: DerivativeParameters,
     underlying_return_shock: Decimal,
 ) -> ValuationResult:
+    """Preserve the legacy index-swap valuation contract."""
     delta_exposure = base_value * parameters.delta_equivalent
     pnl = money(delta_exposure * underlying_return_shock)
     stressed_value = money(base_value + pnl)
@@ -214,9 +270,23 @@ def calculate_position(
             shocks.get("equity_return_shock", Decimal("0")),
         )
     if asset_type == "derivative":
+        derivative_parameters = DerivativeParameters.model_validate(parameters)
+        kind = (derivative_parameters.derivative_kind or derivative_parameters.instrument_type).casefold()
+        if kind in {"interest_rate_swap", "irs"}:
+            rate_shock = shocks.get(
+                "interest_rate_shock_bps",
+                shocks.get("corporate_benchmark_yield_change", shocks.get("government_yield_change", Decimal("0"))),
+            )
+            return interest_rate_swap_valuation(base_value, derivative_parameters, rate_shock)
+        if kind in {"fx_forward", "forward"}:
+            return fx_forward_valuation(
+                base_value,
+                derivative_parameters,
+                shocks.get("fx_return_shock", Decimal("0")),
+            )
         return derivative_valuation(
             base_value,
-            DerivativeParameters.model_validate(parameters),
+            derivative_parameters,
             shocks.get("equity_return_shock", Decimal("0")),
         )
     raise ValueError(f"unsupported asset type: {asset_type}")

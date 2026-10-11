@@ -8,7 +8,7 @@ from app.db.models import Article, Portfolio, RiskSignal, StressTestRun
 from app.db.seed import seed_demo_portfolio, seed_scenarios
 from app.schemas.portfolio import CorporateBondParameters, CorporateLoanParameters, DerivativeParameters, EquityParameters, GovernmentBondParameters
 from app.nlp.service import NLPService
-from app.stress_testing.calculations import corporate_bond_valuation, corporate_loan_valuation, derivative_valuation, equity_valuation, government_bond_valuation
+from app.stress_testing.calculations import calculate_position, corporate_bond_valuation, corporate_loan_valuation, derivative_valuation, equity_valuation, government_bond_valuation
 from app.stress_testing.service import StressTestingService
 
 
@@ -43,6 +43,45 @@ def test_asset_calculations_use_documented_decimal_formulas() -> None:
     derivative = derivative_valuation(Decimal("100.00"), DerivativeParameters(basis="simplified_mark_to_market", instrument_type="swap", underlying="ABC", notional_exposure_inr=Decimal("1000"), delta_equivalent=Decimal("0.5"), market_value_definition="simplified_mark_to_market_portfolio_value"), Decimal("-0.20"))
     assert derivative.pnl == Decimal("-10.00")
 
+    swap = calculate_position(
+        asset_type="derivative",
+        base_value=Decimal("1000000.00"),
+        parameters=DerivativeParameters(
+            basis="simplified_mark_to_market",
+            instrument_type="interest_rate_swap",
+            underlying="INR-SOFR",
+            notional_exposure_inr=Decimal("10000000"),
+            market_value_definition="simplified_mark_to_market_portfolio_value",
+            tenor_years=Decimal("5"),
+            duration_years=Decimal("5"),
+            fixed_rate=Decimal("0.07"),
+            floating_rate=Decimal("0.06"),
+            rate_unit="decimal_rate",
+            pay_receive="pay_fixed",
+        ).model_dump(),
+        shocks={"interest_rate_shock_bps": Decimal("200")},
+    )
+    assert swap.pnl == Decimal("1000000.00")
+
+    forward = calculate_position(
+        asset_type="derivative",
+        base_value=Decimal("500000.00"),
+        parameters=DerivativeParameters(
+            basis="simplified_mark_to_market",
+            instrument_type="fx_forward",
+            underlying="USDINR",
+            notional_exposure_inr=Decimal("20000000"),
+            market_value_definition="simplified_mark_to_market_portfolio_value",
+            tenor_years=Decimal("1"),
+            fx_pair="USDINR",
+            notional_currency="USD",
+            forward_fx_rate=Decimal("83.5"),
+            spot_fx_rate=Decimal("82.5"),
+        ).model_dump(),
+        shocks={"fx_return_shock": Decimal("-0.05")},
+    )
+    assert forward.pnl == Decimal("-1000000.00")
+
 
 def _seed_signal(db_session, *, event_type: str, impact_score: int, entity_name: str | None = None) -> RiskSignal:
     article = Article(source="demo", title=f"{event_type} article", text="Synthetic stress signal", content_hash=f"stress-{event_type}-{impact_score}-{entity_name}", is_demo=True, processing_status="processed")
@@ -67,9 +106,9 @@ def test_broad_market_run_is_deterministic_and_reconciles(db_session) -> None:
     assert reused_again is True
     assert first.simulation_id == second.simulation_id
     assert first.portfolio_value_before == Decimal("1000000000.00")
-    assert first.pnl == Decimal("-34368750.00")
+    assert first.pnl == Decimal("-39168750.00")
     assert first.reconciliation.reconciled is True
-    assert len(first.results) == 5
+    assert len(first.results) == 8
 
 
 def test_high_impact_persisted_signal_automatically_runs_matching_scenario(db_session) -> None:

@@ -30,7 +30,21 @@ def seed_demo_portfolio(db: Session) -> Portfolio:
         )
         db.add(portfolio)
         db.flush()
-    for position_data in _load_json("portfolio_seed.json"):
+    seed_data = _load_json("portfolio_seed.json")
+    legacy_derivative = db.scalar(
+        select(PortfolioPosition).where(
+            PortfolioPosition.portfolio_id == portfolio.id,
+            PortfolioPosition.position_key == "derivatives",
+            PortfolioPosition.is_demo.is_(True),
+        )
+    )
+    if legacy_derivative is not None and not any(
+        str(position["position_key"]) == "derivatives" for position in seed_data
+    ):
+        db.delete(legacy_derivative)
+        db.flush()
+
+    for position_data in seed_data:
         position_key = str(position_data["position_key"])
         existing = db.scalar(
             select(PortfolioPosition).where(

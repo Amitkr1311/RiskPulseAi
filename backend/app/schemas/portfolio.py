@@ -70,8 +70,36 @@ class DerivativeParameters(BaseModel):
     instrument_type: str = Field(min_length=1, max_length=128)
     underlying: str = Field(min_length=1, max_length=128)
     notional_exposure_inr: Decimal = Field(ge=ZERO)
-    delta_equivalent: Decimal
+    delta_equivalent: Decimal | None = None
     market_value_definition: Literal["simplified_mark_to_market_portfolio_value"]
+    derivative_kind: Literal["interest_rate_swap", "fx_forward", "index_total_return_swap"] | None = None
+    tenor_years: Decimal | None = Field(default=None, gt=ZERO)
+    duration_years: Decimal | None = Field(default=None, gt=ZERO)
+    fixed_rate: Decimal | None = Field(default=None, ge=ZERO, le=ONE)
+    floating_rate: Decimal | None = Field(default=None, ge=ZERO, le=ONE)
+    rate_unit: Literal["decimal_rate"] | None = None
+    pay_receive: Literal["pay_fixed", "receive_fixed"] | None = None
+    fx_pair: str | None = Field(default=None, min_length=3, max_length=16)
+    notional_currency: str | None = Field(default=None, min_length=3, max_length=3)
+    forward_fx_rate: Decimal | None = Field(default=None, gt=ZERO)
+    spot_fx_rate: Decimal | None = Field(default=None, gt=ZERO)
+
+    @model_validator(mode="after")
+    def validate_derivative_kind(self) -> "DerivativeParameters":
+        kind = self.derivative_kind or self.instrument_type.casefold()
+        if kind in {"interest_rate_swap", "irs"}:
+            if self.tenor_years is None or self.fixed_rate is None or self.floating_rate is None:
+                raise ValueError("interest rate swaps require tenor and fixed/floating rates")
+            if self.rate_unit != "decimal_rate":
+                raise ValueError("interest rate swaps require rate_unit=decimal_rate")
+        elif kind in {"fx_forward", "forward"}:
+            if self.tenor_years is None or self.fx_pair is None or self.forward_fx_rate is None:
+                raise ValueError("FX forwards require tenor, pair, and forward FX rate")
+            if self.notional_currency is None:
+                raise ValueError("FX forwards require a notional currency")
+        elif self.delta_equivalent is None:
+            raise ValueError("legacy derivatives require delta_equivalent")
+        return self
 
 
 PARAMETER_MODELS: dict[str, type[BaseModel]] = {

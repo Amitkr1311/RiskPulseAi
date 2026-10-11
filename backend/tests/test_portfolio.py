@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.db.models import Portfolio
+from app.db.models import Portfolio, PortfolioPosition
 from app.db.seed import seed_demo_portfolio
 from app.portfolio.scenarios import SCENARIO_TEMPLATES
 from app.schemas.portfolio import CorporateLoanParameters, GovernmentBondParameters
@@ -16,7 +16,7 @@ def test_demo_seed_is_exact_and_idempotent(db_session) -> None:
     db_session.commit()
 
     portfolio = db_session.query(Portfolio).one()
-    assert len(portfolio.positions) == 5
+    assert len(portfolio.positions) == 8
     assert sum(position.market_value for position in portfolio.positions) == Decimal("1000000000.00")
     assert {position.asset_type for position in portfolio.positions} == {
         "corporate_loan",
@@ -36,6 +36,43 @@ def test_demo_seed_is_exact_and_idempotent(db_session) -> None:
         "equity": Decimal("10.0"),
         "derivative": Decimal("5.0"),
     }
+
+
+def test_demo_seed_replaces_the_legacy_single_derivative_book(db_session) -> None:
+    portfolio = Portfolio(
+        portfolio_key="demo-banking-portfolio",
+        name="Demo Banking Portfolio",
+        currency="INR",
+        is_demo=True,
+    )
+    db_session.add(portfolio)
+    db_session.flush()
+    db_session.add(
+        PortfolioPosition(
+            portfolio_id=portfolio.id,
+            position_key="derivatives",
+            name="Derivative marked-to-market book",
+            asset_type="derivative",
+            market_value=Decimal("50000000"),
+            currency="INR",
+            is_demo=True,
+            valuation_parameters={
+                "basis": "simplified_mark_to_market",
+                "instrument_type": "index_total_return_swap",
+                "underlying": "SYNBANK",
+                "notional_exposure_inr": "100000000",
+                "delta_equivalent": "0.50",
+                "market_value_definition": "simplified_mark_to_market_portfolio_value",
+            },
+        )
+    )
+    db_session.commit()
+
+    seed_demo_portfolio(db_session)
+    db_session.commit()
+
+    assert db_session.query(PortfolioPosition).filter_by(portfolio_id=portfolio.id).count() == 8
+    assert db_session.query(PortfolioPosition).filter_by(position_key="derivatives").count() == 0
 
 
 def test_zero_value_portfolio_is_safe(db_session) -> None:
@@ -104,7 +141,7 @@ def test_portfolio_endpoints_return_explicit_units_and_filters(client, db_sessio
     portfolio = portfolio_response.json()
     assert portfolio["total_market_value_inr"] == "1000000000.00"
     assert portfolio["total_market_value_crore"] == "100.00"
-    assert portfolio["position_count"] == 5
+    assert portfolio["position_count"] == 8
     assert portfolio["is_demo"] is True
 
     positions_response = client.get("/portfolio/positions?asset_class=equity&limit=1")

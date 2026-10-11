@@ -20,7 +20,7 @@ The seed is stable and idempotent:
 | Equities | 100,000,000.00 | 10.00 | 10% |
 | Derivatives | 50,000,000.00 | 5.00 | 5% |
 
-The API uses exact Decimal values and exposes rupees as `market_value_inr`. Crore values are derived for display using `₹1 crore = ₹10,000,000`; they are not independently stored. The derivative value is a simplified marked-to-market value. Any notional exposure is stored separately in its valuation parameters.
+The API uses exact Decimal values and exposes rupees as `market_value_inr`. Crore values are derived for display using `₹1 crore = ₹10,000,000`; they are not independently stored. Derivative market values are simplified marked-to-market values, while each derivative keeps its notional, tenor, and rate/FX terms in `valuation_parameters`.
 
 ## Base valuation formulas
 
@@ -30,13 +30,15 @@ Milestone 5 reports holdings, totals, asset-class allocation, sector allocation,
 - Interest-rate approximation for a later stress milestone: `ΔP/P ≈ -D_mod × Δy`. If convexity is supplied, a later implementation may add `0.5 × Convexity × (Δy)^2`.
 - `100 bps = 0.01` as an absolute decimal rate change.
 - Expected credit loss for a later credit-stress implementation: `ECL = Exposure × PD × LGD`.
-- Equity return approximation for a later market scenario: `ΔV = Market Value × Return Shock`. Apply beta once when the scenario explicitly represents a broad-market return shock.
+- Equity return approximation: `ΔV = Market Value × Return Shock`. Apply beta once when the scenario explicitly represents a broad-market return shock.
+- Interest-rate swaps use `ΔV ≈ Notional × Duration × Rate Shock` with rate shocks converted from basis points.
+- FX forwards use `ΔV ≈ Notional × FX Shock`.
 
 All rate, return, spread, PD, LGD, recovery, duration, beta, and derivative sensitivity units are explicit in the position parameters and scenario templates. Beta is an exposure sensitivity and is not constrained to the `[0, 1]` interval.
 
 ## Scenario templates
 
-Five deterministic, validated templates are defined in `backend/app/portfolio/scenarios.py`: geopolitical, macroeconomic/rate, credit event, regulatory, and market crash. Milestone 6 executes these templates through the auditable stress-testing engine documented in [`stress_testing.md`](stress_testing.md).
+The demo portfolio contains two interest-rate swaps and two FX forwards alongside loans, bonds, and equities. Five deterministic, validated templates are defined in `backend/app/portfolio/scenarios.py`: geopolitical, macroeconomic/rate, credit event, regulatory, and market crash. The stress engine applies the simplified derivative shocks to every included derivative position.
 
 ## API
 
