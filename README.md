@@ -38,6 +38,8 @@ flowchart LR
 
 The detailed notes are in [`docs/architecture.md`](docs/architecture.md).
 
+![RiskPulse AI architecture](docs/architecture.png)
+
 ### Technology stack
 
 - Backend: Python 3.12+, FastAPI, SQLAlchemy, Alembic, Pydantic Settings, Uvicorn
@@ -89,6 +91,38 @@ The CSV files are local/user-supplied data and are not redistributed as a claim 
 - Node.js 20+
 - Docker Desktop with Compose
 - Tested on Windows PowerShell; equivalent shell commands work on macOS/Linux with path syntax adjusted.
+
+### Step-by-step local setup (Bash)
+
+The repository keeps backend dependencies in `backend/requirements.txt` and frontend dependencies in `frontend/package.json`.
+
+```bash
+git clone <your-repo-url>
+cd <repo-folder>
+
+cp .env.example .env
+cp frontend/.env.example frontend/.env.local
+docker compose up -d postgres
+
+python3 -m venv backend/.venv
+source backend/.venv/bin/activate
+python -m pip install -r backend/requirements.txt
+
+cd backend
+alembic upgrade head
+python -m app.db.seed
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+In a second terminal, from the repository root:
+
+```bash
+cd <repo-folder>/frontend
+npm install
+npm run dev
+```
+
+Open <http://localhost:3000> for the frontend and <http://localhost:8000/docs> for the API documentation.
 
 ### Start PostgreSQL and the backend
 
@@ -204,12 +238,3 @@ npm run build
 - [`docs/stress_testing.md`](docs/stress_testing.md) - scenarios, eligibility, valuation, and reconciliation
 - [`docs/research.md`](docs/research.md) - PhraseBank evaluation and historical market research
 - [`docx/RiskPulse_AI_Project_Specification.md`](docx/RiskPulse_AI_Project_Specification.md) - project specification
-
-## Submission checklist
-
-Before submitting, fill in the candidate metadata above and add:
-
-- `docs/presentation.pdf` containing the required 5-7 slide deck
-- `docs/architecture.png` containing a high-resolution architecture diagram
-- A working demo video link
-- A hosted slide-deck link, if required by the submission portal
