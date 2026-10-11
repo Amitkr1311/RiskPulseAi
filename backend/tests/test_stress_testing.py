@@ -148,6 +148,11 @@ def test_auto_trigger_uses_strictly_greater_than_threshold(db_session) -> None:
     assert db_session.query(StressTestRun).count() == 0
 
 
+def test_new_trigger_threshold_takes_precedence_over_legacy_setting() -> None:
+    assert Settings(stress_trigger_threshold=8).stress_trigger_threshold == 8
+    assert Settings(stress_impact_threshold=6).stress_trigger_threshold == 6
+
+
 def test_eligibility_threshold_mapping_and_relevance(db_session) -> None:
     portfolio = seed_demo_portfolio(db_session)
     seed_scenarios(db_session)

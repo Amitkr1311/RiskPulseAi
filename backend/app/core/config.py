@@ -54,7 +54,10 @@ class Settings(BaseSettings):
     )
 
     def model_post_init(self, __context: object) -> None:
-        if self.stress_impact_threshold is not None:
+        if (
+            self.stress_impact_threshold is not None
+            and "stress_trigger_threshold" not in self.model_fields_set
+        ):
             self.stress_trigger_threshold = self.stress_impact_threshold
         self.stress_impact_threshold = self.stress_trigger_threshold
 
