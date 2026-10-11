@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ArticleTable } from "@/components/article-table";
-import { EmptyState, ErrorState, LoadingState, PageHeader } from "@/components/ui";
+import { EmptyState, ErrorState, LoadingState, PageHeader, RefreshButton } from "@/components/ui";
 import { api, type Article, type IngestionStatus, type RiskSignal, type SocialReplayStatus } from "@/lib/api";
 import { formatDate, titleCase } from "@/lib/format";
 
@@ -106,7 +106,7 @@ export default function NewsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="RSS, social and Reddit intelligence" title="News Feed" description="Unified source records with publication time, ingestion time, processing state, and linked risk output." actions={<button className="button button-secondary" onClick={() => void load()} type="button">Refresh</button>} />
+      <PageHeader eyebrow="RSS, social and Reddit intelligence" title="News Feed" description="Unified source records with publication time, ingestion time, processing state, and linked risk output." actions={<RefreshButton onRefresh={load} />} />
       <section className="section-block replay-panel" aria-labelledby="social-replay-heading">
         <div className="section-heading"><div><div className="section-kicker">Historical data stream</div><h2 id="social-replay-heading">Social replay</h2></div><span className={"status-label " + (replayStatus === "running" ? "positive" : "muted")}>{titleCase(replayStatus)}</span></div>
         <p className="section-copy">Replays the downloaded historical CSV through the same article, NLP, risk-signal, and qualifying stress-test pipeline. Records remain labelled historical; this is not a live social feed.</p>

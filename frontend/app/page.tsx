@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ArticleTable } from "@/components/article-table";
 import { RiskSignalTable } from "@/components/risk-signal-table";
-import { EmptyState, ErrorState, LoadingState, Metric, PageHeader } from "@/components/ui";
+import { EmptyState, ErrorState, LoadingState, Metric, PageHeader, RefreshButton } from "@/components/ui";
 import { api, type Article, type DashboardSummary, type IngestionStatus, type PortfolioSummary, type RiskSignal } from "@/lib/api";
 import { formatDate, formatInr, formatPercent, titleCase } from "@/lib/format";
 
@@ -56,7 +56,7 @@ export default function OverviewPage() {
         eyebrow="Risk intelligence workspace"
         title="Overview"
         description="A current view of the information stream, material risk signals, and synthetic portfolio exposure."
-        actions={<button className="button button-secondary" onClick={() => void load()} type="button">Refresh data</button>}
+        actions={<RefreshButton label="Refresh data" onRefresh={load} />}
       />
       {error ? <div className="inline-error" role="status">{error}</div> : null}
 

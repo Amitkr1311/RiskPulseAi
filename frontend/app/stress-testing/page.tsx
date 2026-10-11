@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { ErrorState, EmptyState, LoadingState, PageHeader } from "@/components/ui";
+import { ErrorState, EmptyState, LoadingState, PageHeader, RefreshButton } from "@/components/ui";
 import { api, type RiskSignal, type StressRunDetail, type StressRunSummary, type StressScenario } from "@/lib/api";
 import { formatDate, formatInr, formatPercent, titleCase } from "@/lib/format";
 
@@ -110,7 +110,7 @@ export default function StressTestingPage() {
         eyebrow="Hypothetical analysis"
         title="Stress Testing"
         description="Run deterministic, auditable scenario analyses against the persisted synthetic portfolio. Results are hypothetical and not forecasts."
-        actions={<button className="button button-secondary" onClick={() => void load()} type="button">Refresh</button>}
+        actions={<RefreshButton onRefresh={load} />}
       />
 
       <section className="two-column-grid">

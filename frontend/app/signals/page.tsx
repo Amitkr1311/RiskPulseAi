@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { RiskSignalTable, SignalArticleLink } from "@/components/risk-signal-table";
-import { EmptyState, ErrorState, ImpactMark, LoadingState, PageHeader } from "@/components/ui";
+import { EmptyState, ErrorState, ImpactMark, LoadingState, PageHeader, RefreshButton } from "@/components/ui";
 import { api, type RiskSignal, type SignalTaxonomy } from "@/lib/api";
 import { formatDate, formatPercent, titleCase } from "@/lib/format";
 
@@ -75,7 +75,7 @@ export default function SignalsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Traceable NLP output" title="Risk Signals" description="Review persisted event classifications, impact scores, sentiment, and model rationale from the ingestion pipeline." actions={<button className="button button-secondary" onClick={() => void load()} type="button">Refresh</button>} />
+      <PageHeader eyebrow="Traceable NLP output" title="Risk Signals" description="Review persisted event classifications, impact scores, sentiment, and model rationale from the ingestion pipeline." actions={<RefreshButton onRefresh={load} />} />
       <section className="filter-panel" aria-label="Risk signal filters">
         <label>Entity<input onChange={(event) => { setEntity(event.target.value); setOffset(0); }} placeholder="Search entity" value={entity} /></label>
         <label>Event group<select onChange={(event) => { setEventGroup(event.target.value); setOffset(0); }} value={eventGroup}><option value="">All event groups</option>{Object.keys(taxonomy?.event_groups ?? {}).map((group) => <option key={group} value={group}>{titleCase(group)}</option>)}</select></label>

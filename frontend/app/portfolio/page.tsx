@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { EmptyState, ErrorState, LoadingState, Metric, PageHeader } from "@/components/ui";
+import { EmptyState, ErrorState, LoadingState, Metric, PageHeader, RefreshButton } from "@/components/ui";
 import { api, type Portfolio, type PortfolioPosition } from "@/lib/api";
 import { formatInr, formatPercent, titleCase } from "@/lib/format";
 
@@ -33,7 +33,7 @@ export default function PortfolioPage() {
 
   return (
     <>
-      <PageHeader eyebrow={portfolio.is_demo ? "Synthetic portfolio · hypothetical" : "Persisted portfolio"} title={portfolio.name} description={portfolio.description ?? "Base valuation and allocation view."} actions={<button className="button button-secondary" onClick={() => void load()} type="button">Refresh</button>} />
+      <PageHeader eyebrow={portfolio.is_demo ? "Synthetic portfolio · hypothetical" : "Persisted portfolio"} title={portfolio.name} description={portfolio.description ?? "Base valuation and allocation view."} actions={<RefreshButton onRefresh={load} />} />
       {error ? <div className="inline-error" role="status">{error}</div> : null}
       <section className="metrics-grid" aria-label="Portfolio metrics">
         <Metric label="Total market value" value={formatInr(portfolio.total_market_value_crore, "crore")} detail={`${formatInr(portfolio.total_market_value_inr)} INR`} />

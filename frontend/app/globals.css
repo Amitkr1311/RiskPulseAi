@@ -69,6 +69,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .button-secondary:hover, .button-quiet:hover { background: var(--teal-08); border-color: var(--teal); }
 .button-quiet { background: transparent; border-color: var(--ink-12); color: var(--ink-76); }
 .button:disabled { cursor: not-allowed; opacity: .4; }
+.refresh-button { align-items: center; display: inline-flex; gap: 8px; justify-content: center; min-width: 104px; }
+.button-spinner { animation: button-spin .8s linear infinite; border: 2px solid var(--ink-12); border-right-color: var(--teal); border-radius: 50%; display: inline-block; height: 14px; width: 14px; }
+@keyframes button-spin { to { transform: rotate(360deg); } }
 .inline-error { border-left: 3px solid var(--teal); color: var(--ink-76); font-size: .78rem; margin: -10px 0 22px; padding: 8px 12px; }
 .metrics-grid { border-bottom: 1px solid var(--ink-12); border-top: 1px solid var(--ink-12); display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 42px; }
 .metric { border-right: 1px solid var(--ink-12); min-height: 120px; padding: 18px 20px; }

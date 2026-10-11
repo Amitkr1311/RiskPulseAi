@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
   return (
@@ -15,6 +15,27 @@ export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?:
 
 export function LoadingState({ label = "Loading data" }: { label?: string }) {
   return <div className="state-panel"><span className="loading-mark" aria-hidden="true" />{label}</div>;
+}
+
+export function RefreshButton({ onRefresh, label = "Refresh", busyLabel = "Updating..." }: { onRefresh: () => Promise<void> | void; label?: string; busyLabel?: string }) {
+  const [busy, setBusy] = useState(false);
+
+  async function refresh() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await onRefresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button aria-busy={busy} className="button button-secondary refresh-button" disabled={busy} onClick={() => void refresh()} type="button">
+      {busy ? <span aria-hidden="true" className="button-spinner" /> : null}
+      <span>{busy ? busyLabel : label}</span>
+    </button>
+  );
 }
 
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {

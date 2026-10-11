@@ -1,16 +1,96 @@
-# RiskPulse AI
+# RiskPulse AI - S&P Global & Crisil Campus Hackathon
 
-RiskPulse AI is an AI-powered financial risk intelligence and synthetic portfolio stress-testing prototype. The repository contains the project foundation, two-source data ingestion, the traceable article-to-risk-signal NLP pipeline, API integration, synthetic portfolio construction, and deterministic stress testing.
+**Candidate Name:** Amit Kumar<br>
+**College Email ID:** cs23b1004@iiitr.ac.in<br>
+**College / Campus:** Indian Institute of Information Technology Raichur (IIIT Raichur)<br>
+**Demo Video Link:** [Add unlisted YouTube link]<br>
+**Slide Deck Link:** [Add hosted slide-deck link, if available]<br>
 
-The project specification is [`docx/RiskPulse_AI_Project_Specification.md`](docx/RiskPulse_AI_Project_Specification.md) and is authoritative for architecture, scope, and milestone acceptance criteria.
+RiskPulse AI is a financial risk intelligence and portfolio stress-testing prototype. It converts financial news and historical social posts into traceable risk signals, maps those signals to a synthetic portfolio, and runs deterministic scenario analysis when a signal is material.
 
-## Prerequisites
+The system is designed for an analyst demo rather than live trading or credit underwriting. Every signal keeps its source article, extracted entities, sentiment, event classification, impact factors, and model metadata. Stress results preserve the triggering signal, scenario assumptions, position-level calculations, and reconciliation details.
 
+## 1. Project Overview / Problem Statement & Approach
+
+Financial risk teams need to move from unstructured information to an explainable view of portfolio impact. News and social content can contain early indications of credit deterioration, geopolitical stress, regulatory action, market disruption, or other events, but raw text alone is not an auditable risk assessment.
+
+RiskPulse AI addresses this with a pipeline that ingests RSS news and a historical social CSV, normalizes and deduplicates records, extracts known entities through aliases, scores sentiment, classifies event type, and assigns an impact score from 1 to 10. A signal above the configured threshold automatically selects the matching scenario and runs a targeted or broad portfolio stress test.
+
+The demo portfolio contains named Tesla, Apple, Microsoft, and HDFC Bank exposures across loans, bonds, and equities, plus interest-rate swaps and FX forwards. The stress-testing view compares portfolio value before and after the scenario, shows asset-class changes, highlights the five largest losses, and lists the matched positions.
+
+## 2. Architecture & Tech Stack
+
+```mermaid
+flowchart LR
+    UI[Next.js UI] --> API[FastAPI API]
+    API --> DB[(PostgreSQL)]
+    API --> RSS[RSS adapter]
+    API --> SOCIAL[Historical social CSV replay]
+    RSS --> NORMALIZE[Normalize, deduplicate, persist]
+    SOCIAL --> NORMALIZE
+    NORMALIZE --> NLP[NLP risk engine]
+    NLP --> SIGNAL[RiskSignal]
+    SIGNAL --> ROUTE[Event-to-scenario mapping]
+    ROUTE --> STRESS[Stress-testing engine]
+    STRESS --> RESULT[Persisted stress results]
+    RESULT --> UI
+```
+
+The detailed notes are in [`docs/architecture.md`](docs/architecture.md).
+
+### Technology stack
+
+- Backend: Python 3.12+, FastAPI, SQLAlchemy, Alembic, Pydantic Settings, Uvicorn
+- Database: PostgreSQL 16 through Docker Compose
+- Frontend: Next.js 15, React 19, TypeScript, Recharts
+- NLP: deterministic heuristic sentiment by default; optional FinBERT adapter
+- Testing: pytest, mocked provider/model boundaries, ESLint, TypeScript checks
+- License: Apache License 2.0 ([`LICENSE`](LICENSE))
+
+### Current repository structure
+
+```text
+RiskPulseAi/
+├── README.md
+├── LICENSE
+├── docker-compose.yml
+├── data/
+│   └── transactions.csv
+├── backend/
+│   ├── app/                 # FastAPI application, ingestion, NLP, portfolio, stress engine
+│   ├── data/                # Demo articles, aliases, portfolio seed, social CSV
+│   ├── migrations/          # Alembic schema and data migrations
+│   ├── tests/
+│   └── requirements*.txt
+├── frontend/
+│   ├── app/                 # Next.js routes and pages
+│   ├── components/
+│   └── lib/
+├── scripts/
+│   └── build_portfolio.py
+└── docs/                    # API, NLP, portfolio, research, and stress-test notes
+```
+
+## 3. Dataset Used
+
+- `data/transactions.csv`: a local transaction export with date, description, amount, transaction type, category, and account fields. The portfolio builder groups recurring and category patterns into clearly labelled synthetic exposure proxies. Transactions are not treated as proof of actual loans, bonds, equities, or derivatives.
+- `backend/data/tweets-vs-stock.csv`: a historical Tweet Sentiment's Impact on Stock Returns export with date, tweet, stock, and company fields. It is replayed as `source="social"` through the same normalization, deduplication, article persistence, NLP, and stress-trigger flow as other sources.
+- `backend/data/demo_articles.json`: deterministic demo articles, including two high-impact named-company articles for the automatic stress-test demonstration.
+- `backend/data/entity_aliases.json`: explicit aliases for supported organizations and tickers, including Tesla, Apple, Microsoft, and HDFC Bank.
+- `backend/data/portfolio_seed.json`: synthetic portfolio seed with corporate loans, bonds, equities, interest-rate swaps, and FX forwards.
+
+The CSV files are local/user-supplied data and are not redistributed as a claim of ownership. Retain the original dataset attribution and verify its terms before public redistribution.
+
+## 4. Quickstart & Installation
+
+### Runtime
+
+- Python 3.12+; verified locally with Python 3.14.2
 - Node.js 20+
-- Python 3.12+ (the current verification environment uses Python 3.14.2)
-- Docker Desktop with Compose for PostgreSQL
+- Docker Desktop with Compose
+- Tested on Windows PowerShell; equivalent shell commands work on macOS/Linux with path syntax adjusted.
 
-## Local setup
+### Start PostgreSQL and the backend
 
 ```powershell
 Copy-Item .env.example .env
@@ -26,7 +106,9 @@ python -m app.db.seed
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-In another terminal:
+### Start the frontend
+
+In a second terminal:
 
 ```powershell
 Set-Location frontend
@@ -34,13 +116,29 @@ npm install
 npm run dev
 ```
 
-If `INGESTION_API_KEY` is set in the backend/root `.env`, the local Next.js replay proxy reads it server-side. In another environment, set the same server-only variable in the frontend runtime as `INGESTION_API_KEY=...` (without the `NEXT_PUBLIC_` prefix). The key is never sent to the browser. Leave it blank for an unprotected local demo.
+Open <http://localhost:3000> for the application and <http://localhost:8000/docs> for the API documentation.
 
-## Local datasets and import commands
+### Run the deterministic demo
 
-The local transaction export is `data/transactions.csv` (806 rows with `Date`, `Description`, `Amount`, `Transaction Type`, `Category`, and `Account Name`). The local historical social export is `backend/data/tweets-vs-stock.csv` (80,793 rows with `Date`, `Tweet`, `Stock Name`, and `Company Name`). These files are user-supplied downloads and are not redistributed by the project. No license or attribution metadata is included beside the CSVs in this repository; retain the original provider attribution and verify its terms before sharing them.
+```powershell
+Invoke-RestMethod -Method Post http://localhost:8000/ingestion/demo
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/nlp/process-pending -ContentType application/json -Body '{"limit":25}'
+```
 
-Build the database-backed synthetic portfolio from the transaction categories:
+Open the Stress Testing page and inspect the newest automatic run. The named-company demo articles should produce impact scores above 7 and show the triggering article and matched portfolio positions.
+
+### Replay the historical social dataset
+
+The News Feed page provides bounded replay controls. The equivalent API commands are:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/start -ContentType application/json -Body '{"speed_records_per_second":1,"batch_size":1}'
+Invoke-RestMethod http://localhost:8000/replay/status
+```
+
+The replay stores historical publication time separately from ingestion time. It is not a live social feed and the CSV does not provide market-return labels used by the risk engine.
+
+### Build the synthetic portfolio from transactions
 
 ```powershell
 python scripts/build_portfolio.py --input data/transactions.csv
@@ -49,85 +147,43 @@ alembic upgrade head
 python -m app.db.seed
 ```
 
-The builder validates dates and amounts, removes exact duplicate rows, uses debit transactions to derive recurring and sector proxies, and writes clearly labelled synthetic positions to `backend/data/portfolio_seed.json`. The demo seed preserves the specification's ₹100 crore total, keeps derivative notional separate from marked-to-market value, and includes named Tesla, Apple, Microsoft, and HDFC Bank loan, bond, and equity exposures for signal-to-portfolio demonstrations. Consumer transactions are not treated as proof of actual loans, bonds, equities, or derivatives.
+See [`docs/portfolio.md`](docs/portfolio.md) for the mapping assumptions.
 
-Replay the historical social file through the shared article and NLP pipeline:
+### Optional FinBERT demo
+
+The safe default is heuristic sentiment. To use FinBERT:
 
 ```powershell
 Set-Location backend
-Invoke-RestMethod -Method Post -Uri http://localhost:8000/ingestion/run -ContentType application/json -Body '{"sources":["social"],"limit":25}'
-Invoke-RestMethod -Method Post -Uri http://localhost:8000/nlp/process-pending -ContentType application/json -Body '{"limit":25}'
+python -m pip install -r requirements-finbert.txt
+$env:NLP_SENTIMENT_BACKEND="finbert"
+$env:NLP_ALLOW_MODEL_DOWNLOAD="true"
+python -m app.nlp.process --limit 25
 ```
 
-The ingestion endpoint is bounded to 100 records per request. For the full replay, repeat the social request with `offset` values `0`, `100`, `200`, and so on; the adapter reads deterministic CSV slices and the shared flow deduplicates safely.
+The model download requires network access. Tests use the heuristic backend by default.
 
-Social records are stored as `source="social"`, marked as historical replay data, and retain the CSV timestamp, tweet text, stock symbol, and company attribution. They are not a live social feed and the CSV does not supply stock-return labels used by the risk engine. Repeat ingestion is deduplicated by source identifier when available or normalized content hash.
+## 5. Key Results & Domain Impact
 
-### Historical social replay controls
+- Two-source ingestion with normalization, source isolation, bounded retries, and content-hash deduplication.
+- Sentiment stored as one score in `[-1, 1]`, with the label and class probabilities retained as supporting metadata.
+- Impact scoring on a 1-10 scale with an explanation containing sentiment magnitude, event-type weight, and entity exposure.
+- Automatic stress testing for qualifying risk signals above `STRESS_TRIGGER_THRESHOLD` (default 7).
+- Scenario coverage for geopolitical, macroeconomic, credit, regulatory, market-crash, and other mapped event types.
+- Named issuer/entity matching for Tesla, Apple, Microsoft, and HDFC Bank.
+- Derivative stress logic for interest-rate swaps and FX forwards using notional, tenor, duration, rate shock, and FX shock fields.
+- Before/after portfolio charts, asset-class comparisons, top-five loss highlighting, triggering article context, and matched-position display.
+- A three-row local PhraseBank smoke fixture currently reports accuracy `1.0000` and macro-F1 `1.0000`. This is a smoke check, not a full Financial PhraseBank benchmark.
 
-The News page includes a bounded replay worker for the same CSV. It processes one small batch at a time through the social adapter, article deduplication, NLP scoring, risk-signal persistence, and the existing automatic stress-test trigger. Replay state and the cursor are stored in PostgreSQL, so a backend restart preserves progress and marks an interrupted worker as stopped. Reset moves the cursor to the beginning without deleting articles or signals.
+The prototype helps analysts prioritize information, trace why a signal was produced, and estimate scenario sensitivity quickly. It does not provide investment advice, causal market prediction, production credit decisions, or a replacement for validated risk models.
 
-The controls call these endpoints:
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/start -ContentType application/json -Body '{"speed_records_per_second":1,"batch_size":1}'
-Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/pause
-Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/resume
-Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/stop
-Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/reset
-Invoke-RestMethod http://localhost:8000/replay/status
-```
-
-Supported UI speeds are 1, 5, and 10 records per second; the backend enforces a maximum configured by `REPLAY_MAX_SPEED` (10 by default). `start` resumes a stopped/error replay from its saved position. Starting a completed replay begins a new pass but keeps previously persisted data, so those rows are counted as duplicates. `resume` is only for a paused replay, and `reset` is rejected while a worker is active. The frontend uses two-second bounded polling for status and refreshes the news feed as the cursor advances; no fake live indicator is shown.
-
-Replayed articles retain the original historical `published_at` timestamp and a separate database `ingested_at` timestamp. If the CSV is missing, empty, malformed, or NLP fails, the status panel reports the error and the saved cursor remains available for retry. Historical replay cannot reproduce a live social API's delivery order, deleted posts, engagement data, or market-return labels.
-
-To enable optional live RSS/Reddit polling, set `NEWS_RSS_URL` and the `INGESTION_LIVE_*` variables in `.env`. Reddit additionally requires `REDDIT_INGESTION_ENABLED=true` and a valid OAuth access token. Restart the backend after changing environment variables. The frontend automatically refreshes live-feed status, recent articles, NLP status, and signals every 15 seconds. Provider credentials remain backend-only. See [`docs/api.md`](docs/api.md#live-rss-and-reddit-integration).
-
-Open <http://localhost:3000> for the status/NLP view and <http://localhost:8000/docs> for the API documentation.
-
-## Ingestion and NLP demo
-
-Live ingestion remains opt-in. Configure `NEWS_RSS_URL` and/or the Reddit OAuth variables only for sources you are allowed to access. Reddit is disabled unless `REDDIT_INGESTION_ENABLED=true`. `INGESTION_API_KEY` is optional for local/demo triggering; it is not production authentication.
-
-Load deterministic demo articles and process them:
-
-```powershell
-Invoke-RestMethod -Method Post http://localhost:8000/ingestion/demo
-Invoke-RestMethod -Method Post -Uri http://localhost:8000/nlp/process-pending -ContentType application/json -Body '{"limit":25}'
-Invoke-RestMethod http://localhost:8000/signals
-```
-
-The demo fixture includes two named-company articles. After the NLP command, their impact scores exceed 7 and automatically create targeted credit or regulatory stress runs. Open the Stress Testing page and inspect the newest automatic run to see the triggering article and the matched named positions.
-
-The same processing is available from the backend with `python -m app.nlp.process --limit 25`. See [`docs/nlp.md`](docs/nlp.md) for the pipeline, FinBERT setup, scoring formula, taxonomy, and limitations.
-
-For the optional FinBERT demo, install `backend/requirements-finbert.txt`, then set `NLP_SENTIMENT_BACKEND=finbert` and `NLP_ALLOW_MODEL_DOWNLOAD=true` before processing. Tests and normal demo runs keep the safe heuristic default. The supplied three-row PhraseBank smoke fixture scores accuracy `1.0000` and macro-F1 `1.0000`; these numbers are not full-dataset benchmark results. See [`docs/research.md`](docs/research.md) for the full evaluation command.
-
-## API surface
-
-- `GET /health`
-- `GET /articles`, `GET /articles/{article_id}`
-- `POST /ingestion/run`, `POST /ingestion/demo`, `GET /ingestion/status`
-- `GET /replay/status`, `POST /replay/start`, `POST /replay/pause`, `POST /replay/resume`, `POST /replay/stop`, `POST /replay/reset`
-- `GET /nlp/status`, `POST /nlp/process-pending`, `POST /nlp/process/{article_id}`
-- `GET /signals`, `GET /signals/latest`, `GET /signals/{signal_id}`
-- `GET /signals/taxonomy`
-- `GET /dashboard/summary`
-- `GET /portfolio`, `GET /portfolio/positions`, `GET /portfolio/positions/{position_id}`, `GET /portfolio/summary`
-- `GET /stress-testing/scenarios`, `POST /stress-testing/run`, `GET /stress-testing/runs`, `GET /stress-testing/runs/{simulation_id}`
-- `GET /research/sentiment-evaluation`, `GET /research/market-data`, `GET /research/event-window`
-
-Collection responses use `{items, total, limit, offset}`. Articles support `source`, `processing_status`, `published_from`, `published_to`, and `search`. Signals support entity, event, sentiment, impact, source, demo/live, publication, and signal-creation filters. Signal details include the original nested article. Portfolio responses use exact INR values plus derived crore values and provide base valuation only. See [`docs/api.md`](docs/api.md) and [`docs/portfolio.md`](docs/portfolio.md) for request examples, formulas, and validation behavior.
-
-## Verification commands
+## Verification
 
 Backend:
 
 ```powershell
 Set-Location backend
 pytest
-python -m compileall -q app migrations tests
 alembic upgrade head
 ```
 
@@ -140,10 +196,20 @@ npm run typecheck
 npm run build
 ```
 
-Tests use deterministic fixtures and mocked provider/model boundaries; they do not require live provider credentials or a model download. FinBERT is optional and its model page does not declare a license, so commercial use requires legal review.
+## API and documentation
 
-Optional Financial PhraseBank evaluation and yfinance historical market research are documented in [`docs/research.md`](docs/research.md). These workflows require explicit commands and network access when downloading external data; normal application startup and demo mode do not.
+- [`docs/api.md`](docs/api.md) - API endpoints and ingestion examples
+- [`docs/nlp.md`](docs/nlp.md) - NLP pipeline, score formats, FinBERT, and taxonomy
+- [`docs/portfolio.md`](docs/portfolio.md) - transaction-to-portfolio mapping
+- [`docs/stress_testing.md`](docs/stress_testing.md) - scenarios, eligibility, valuation, and reconciliation
+- [`docs/research.md`](docs/research.md) - PhraseBank evaluation and historical market research
+- [`docx/RiskPulse_AI_Project_Specification.md`](docx/RiskPulse_AI_Project_Specification.md) - project specification
 
-## Scope boundaries
+## Submission checklist
 
-The current implementation includes the database-backed portfolio, deterministic scenario execution, signal eligibility and relevance, persisted audit snapshots, idempotent runs, position-level reconciliation, automatic qualifying signal triggers, and the before/after stress-testing dashboard.
+Before submitting, fill in the candidate metadata above and add:
+
+- `docs/presentation.pdf` containing the required 5-7 slide deck
+- `docs/architecture.png` containing a high-resolution architecture diagram
+- A working demo video link
+- A hosted slide-deck link, if required by the submission portal
