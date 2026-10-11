@@ -5,6 +5,7 @@ from app.nlp.events import RuleBasedEventClassifier, event_group_for_type
 from app.nlp.impact import ImpactScorer
 from app.nlp.preprocessing import TextProcessingError, preprocess_text
 from app.nlp.sentiment import FinBertSentimentAnalyzer, HeuristicSentimentAnalyzer, SentimentInferenceError
+from app.portfolio.scenarios import EVENT_SCENARIO_MAP
 
 
 def test_heuristic_sentiment_covers_positive_negative_and_neutral() -> None:
@@ -63,7 +64,16 @@ def test_event_categories_and_fallback_are_deterministic() -> None:
     assert classifier.classify("The central bank changed interest rate policy").event_type == "macroeconomic"
     assert classifier.classify("The borrower missed payment and entered default").event_type == "credit_event"
     assert classifier.classify("A merger and acquisition was announced").event_type == "merger_acquisition"
+    assert classifier.classify("A tariff embargo followed a war conflict").event_type == "geopolitical"
+    assert classifier.classify("The company acquires a competitor in a buyout").event_type == "merger_acquisition"
     assert classifier.classify("A quiet administrative notice").event_type == "other"
+
+
+def test_every_event_type_has_one_scenario_mapping() -> None:
+    from app.nlp.events import EVENT_TYPES
+
+    assert set(EVENT_SCENARIO_MAP) == set(EVENT_TYPES)
+    assert all(EVENT_SCENARIO_MAP[event_type] for event_type in EVENT_TYPES)
 
 
 def test_broader_event_types_have_stable_groups() -> None:

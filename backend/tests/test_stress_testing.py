@@ -119,10 +119,10 @@ def test_eligibility_threshold_mapping_and_relevance(db_session) -> None:
     assert equal_result.eligible is False
     assert "below_impact_threshold" in equal_result.reasons
 
-    unsupported = _seed_signal(db_session, event_type="earnings", impact_score=9)
-    unsupported_result = service.eligibility_for_signal(unsupported.id, portfolio.id)
-    assert unsupported_result.eligible is False
-    assert "unsupported_event_type" in unsupported_result.reasons
+    mapped_without_relevance = _seed_signal(db_session, event_type="earnings", impact_score=9)
+    mapped_result = service.eligibility_for_signal(mapped_without_relevance.id, portfolio.id)
+    assert mapped_result.eligible is False
+    assert "insufficient_portfolio_relevance" in mapped_result.reasons
 
     targeted_missing = _seed_signal(db_session, event_type="credit_event", impact_score=9, entity_name="Unknown borrower")
     missing_result = service.eligibility_for_signal(targeted_missing.id, portfolio.id)

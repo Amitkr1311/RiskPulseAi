@@ -3,6 +3,44 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.nlp.events import EVENT_TYPES
+
+
+# One auditable mapping is the source of truth for signal-to-scenario routing.
+# Several detailed NLP event types intentionally share a broad scenario until
+# a dedicated calibrated scenario is available.
+EVENT_SCENARIO_MAP: dict[str, str] = {
+    "geopolitical": "geopolitical_shock",
+    "macroeconomic": "macroeconomic_rate_shock",
+    "credit_event": "credit_deterioration",
+    "merger_acquisition": "regulatory_shock",
+    "earnings": "regulatory_shock",
+    "regulatory": "regulatory_shock",
+    "product_launch": "regulatory_shock",
+    "market_crash": "broad_market_crash",
+    "company_performance": "regulatory_shock",
+    "liquidity_stress": "credit_deterioration",
+    "cyber_incident": "regulatory_shock",
+    "fraud_misconduct": "credit_deterioration",
+    "litigation": "regulatory_shock",
+    "operational_disruption": "regulatory_shock",
+    "climate_risk": "regulatory_shock",
+    "sovereign_risk": "macroeconomic_rate_shock",
+    "currency_shock": "macroeconomic_rate_shock",
+    "other": "broad_market_crash",
+}
+
+if set(EVENT_SCENARIO_MAP) != set(EVENT_TYPES):
+    raise RuntimeError("Every NLP event type must have exactly one stress scenario mapping")
+
+
+def event_types_for_scenario(scenario_key: str) -> list[str]:
+    return [
+        event_type
+        for event_type, mapped_key in EVENT_SCENARIO_MAP.items()
+        if mapped_key == scenario_key
+    ]
+
 
 class ShockParameter(BaseModel):
     name: str
@@ -29,7 +67,7 @@ SCENARIO_TEMPLATES = [
         scenario_key="geopolitical_shock",
         name="Geopolitical shock",
         event_category="geopolitical",
-        supported_event_types=["geopolitical"],
+        supported_event_types=event_types_for_scenario("geopolitical_shock"),
         required_signal_fields=["impact_score", "event_type"],
         relevance_scope="broad_market",
         trigger_threshold=7,
@@ -38,6 +76,8 @@ SCENARIO_TEMPLATES = [
         shock_parameters=[
             ShockParameter(name="equity_return_shock", value=Decimal("-0.10"), unit="decimal_return", interpretation="Relevant equity positions lose 10% of market value."),
             ShockParameter(name="corporate_spread_widening", value=Decimal("150"), unit="basis_points", interpretation="Corporate credit spreads widen by 150 basis points."),
+            ShockParameter(name="fx_return_shock", value=Decimal("-0.05"), unit="decimal_return", interpretation="Relevant FX exposures lose 5% from the adverse currency move."),
+            ShockParameter(name="oil_price_shock", value=Decimal("0.20"), unit="decimal_return", interpretation="Oil prices rise by 20% as an illustrative commodity shock."),
             ShockParameter(name="government_yield_change", value=Decimal("-25"), unit="basis_points", interpretation="Government yields fall by 25 basis points in an illustrative flight to quality."),
             ShockParameter(name="corporate_loan_pd_multiplier", value=Decimal("1.5"), unit="multiplier", interpretation="Corporate-loan baseline PD is multiplied by 1.5 and capped at 100%."),
         ],
@@ -46,7 +86,7 @@ SCENARIO_TEMPLATES = [
         scenario_key="macroeconomic_rate_shock",
         name="Macroeconomic and interest-rate shock",
         event_category="macroeconomic",
-        supported_event_types=["macroeconomic"],
+        supported_event_types=event_types_for_scenario("macroeconomic_rate_shock"),
         required_signal_fields=["impact_score", "event_type"],
         relevance_scope="broad_market",
         trigger_threshold=7,
@@ -64,7 +104,7 @@ SCENARIO_TEMPLATES = [
         scenario_key="credit_deterioration",
         name="Credit deterioration",
         event_category="credit_event",
-        supported_event_types=["credit_event"],
+        supported_event_types=event_types_for_scenario("credit_deterioration"),
         required_signal_fields=["impact_score", "event_type", "entity_or_sector"],
         relevance_scope="entity_or_sector",
         trigger_threshold=7,
@@ -80,7 +120,7 @@ SCENARIO_TEMPLATES = [
         scenario_key="regulatory_shock",
         name="Regulatory or sector-specific shock",
         event_category="regulatory",
-        supported_event_types=["regulatory"],
+        supported_event_types=event_types_for_scenario("regulatory_shock"),
         required_signal_fields=["impact_score", "event_type", "entity_or_sector"],
         relevance_scope="entity_or_sector",
         trigger_threshold=7,
@@ -96,7 +136,7 @@ SCENARIO_TEMPLATES = [
         scenario_key="broad_market_crash",
         name="Broad market crash",
         event_category="market_crash",
-        supported_event_types=["market_crash"],
+        supported_event_types=event_types_for_scenario("broad_market_crash"),
         required_signal_fields=["impact_score", "event_type"],
         relevance_scope="broad_market",
         trigger_threshold=7,

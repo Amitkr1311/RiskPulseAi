@@ -47,10 +47,20 @@ ENTITY_TYPES = (
 )
 
 EVENT_PATTERNS: dict[str, tuple[str, ...]] = {
-    "geopolitical": ("geopolitical", "sanctions", "conflict", "war", "supply-chain disruption", "trade restriction"),
+    "geopolitical": (
+        "geopolitical",
+        "sanctions",
+        "sanction",
+        "conflict",
+        "war",
+        "tariff",
+        "embargo",
+        "supply-chain disruption",
+        "trade restriction",
+    ),
     "macroeconomic": ("central bank", "interest rate", "inflation", "recession", "monetary policy", "unemployment", "gdp growth"),
     "credit_event": ("default", "missed payment", "debt restructuring", "credit downgrade", "bankruptcy", "non-performing loan", "rating downgrade"),
-    "merger_acquisition": ("merger", "acquisition", "takeover", "buyout"),
+    "merger_acquisition": ("merger", "acquisition", "acquires", "takeover", "buyout"),
     "earnings": ("earnings", "quarterly results", "financial results", "guidance"),
     "regulatory": ("regulator", "regulatory", "fine", "compliance", "new rule", "investigation", "sanctioned by regulator"),
     "product_launch": ("product launch", "new product", "launches", "unveiled"),
