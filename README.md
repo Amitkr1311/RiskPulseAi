@@ -47,7 +47,7 @@ The detailed notes are in [`docs/architecture.md`](docs/architecture.md).
 - Frontend: Next.js 15, React 19, TypeScript, Recharts
 - NLP: deterministic heuristic sentiment by default; optional FinBERT adapter
 - Testing: pytest, mocked provider/model boundaries, ESLint, TypeScript checks
-- License: Apache License 2.0 ([`LICENSE`](LICENSE))
+- License: MIT ([`LICENSE`](LICENSE))
 
 ### Current repository structure
 
