@@ -4,7 +4,7 @@
 **College Email ID:** cs23b1004@iiitr.ac.in<br>
 **College / Campus:** Indian Institute of Information Technology Raichur (IIIT Raichur)<br>
 **Demo Video Link:** [Add unlisted YouTube link]<br>
-**Slide Deck Link:** [Add hosted slide-deck link, if available]<br>
+**Slide Deck Link:** [Presentation PDF](docs/presentation.pdf) or https://www.dropbox.com/scl/fi/b7u712zdrxvzcdi3hpclt/presentation.pdf?rlkey=mgr5iwf0tsxh2vnmtj78s3lpp&st=gon10b9g&dl=0 <br>
 
 RiskPulse AI is a financial risk intelligence and portfolio stress-testing prototype. It converts financial news and historical social posts into traceable risk signals, maps those signals to a synthetic portfolio, and runs deterministic scenario analysis when a signal is material.
 
@@ -238,3 +238,9 @@ npm run build
 - [`docs/stress_testing.md`](docs/stress_testing.md) - scenarios, eligibility, valuation, and reconciliation
 - [`docs/research.md`](docs/research.md) - PhraseBank evaluation and historical market research
 - [`docx/RiskPulse_AI_Project_Specification.md`](docx/RiskPulse_AI_Project_Specification.md) - project specification
+
+## Presentation
+
+The required seven-slide deck covers the problem and approach, architecture and data flow, implementation highlights, key results, domain impact, and limitations with next steps.
+
+[Download the presentation PDF](docs/presentation.pdf)
