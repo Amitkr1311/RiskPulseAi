@@ -1,0 +1,3 @@
+# Optional FinBERT demo runtime. The default heuristic path does not need this file.
+transformers>=4.45,<5
+torch>=2.2,<3

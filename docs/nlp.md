@@ -11,10 +11,15 @@ The pipeline processes stored `Article` records into one idempotent `RiskSignal`
 Set `NLP_SENTIMENT_BACKEND=finbert` to use the optional `ProsusAI/finbert` adapter. Install the optional runtime packages in the backend environment:
 
 ```powershell
-python -m pip install transformers torch
+python -m pip install -r requirements-finbert.txt
+$env:NLP_SENTIMENT_BACKEND="finbert"
+$env:NLP_ALLOW_MODEL_DOWNLOAD="true"
+python -m app.nlp.process --limit 25
 ```
 
 The adapter loads once per service instance, requests all three labels, and computes `score = P(positive) - P(negative)`. The verified model mapping is positive, negative, neutral. Set `NLP_ALLOW_MODEL_DOWNLOAD=true` only when downloading the model is intended; otherwise a missing local model fails clearly and creates no signal.
+
+The safe default remains `NLP_SENTIMENT_BACKEND=heuristic` with `NLP_ALLOW_MODEL_DOWNLOAD=false`, which is what tests and deterministic demo runs use. FinBERT downloads its model into the local Hugging Face cache on first use; after that, `NLP_ALLOW_MODEL_DOWNLOAD=false` can be used for an offline run.
 
 The official model card documents the model and output labels but does not declare a license. Perform legal review before redistributing or operating FinBERT in a commercial deployment: <https://huggingface.co/ProsusAI/finbert>.
 
@@ -31,6 +36,8 @@ The score is deterministic and bounded to 1–10:
 `round(1 + 9 × (0.60 × event_type_weight + 0.20 × sentiment_magnitude + 0.10 × source_reliability + 0.10 × entity_exposure))`
 
 Sentiment is one float in `[-1, 1]`: FinBERT uses `P(positive) - P(negative)`, while the deterministic heuristic uses the same range. The label and class probabilities are stored as extra metadata. Impact is an integer from 1 to 10. Every persisted signal stores sentiment magnitude, event-type weight, normalized entity exposure, source reliability, and the plain-English rationale.
+
+The repository smoke fixture `backend/tests/fixtures/phrasebank_small.csv` was re-evaluated with the heuristic backend: 3 examples, accuracy `1.0000`, macro-F1 `1.0000`. This is a tiny local check, not a claim about the full Financial PhraseBank; run `python -m research.evaluate_sentiment --config sentences_allagree` after installing the research extras for the full dataset.
 
 ## Processing commands and endpoints
 
