@@ -150,6 +150,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .status-label.muted { color: var(--ink-62); }
 .source-health-detail { color: var(--ink-62); font-size: .72rem; margin-top: 9px; }
 .source-health-detail strong { color: var(--ink); }
+.replay-panel { border: 1px solid var(--ink-12); padding: 20px; }
+.replay-controls { align-items: flex-end; display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; }
+.replay-controls .field-label { margin: 0; min-width: 150px; }
+.replay-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+.replay-progress { background: var(--ink-08); height: 8px; margin-top: 18px; overflow: hidden; }
+.replay-progress span { background: var(--teal); display: block; height: 100%; transition: width .2s ease; }
+.replay-metrics { color: var(--ink-62); display: flex; flex-wrap: wrap; font-size: .72rem; gap: 18px; margin-top: 12px; }
+.replay-metrics strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.replay-meta { color: var(--ink-62); font-size: .72rem; line-height: 1.7; margin-top: 12px; overflow-wrap: anywhere; }
+.replay-meta strong { color: var(--ink); }
+.replay-meta .inline-error { display: block; margin: 8px 0 0; }
+
+.matched-position-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.matched-position { border: 1px solid var(--ink-12); color: var(--ink); font-size: .78rem; padding: 7px 9px; }
 .parameter-details summary { color: var(--teal); cursor: pointer; font-size: .72rem; font-weight: 750; }
 .parameter-details dl { min-width: 220px; }
 .parameter-details dl > div { display: flex; gap: 10px; justify-content: space-between; padding: 4px 0; }

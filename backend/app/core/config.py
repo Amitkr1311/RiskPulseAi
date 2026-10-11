@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     nlp_model_device: str = "cpu"
     nlp_max_text_chars: int = Field(default=12_000, ge=500, le=100_000)
     nlp_batch_size: int = Field(default=25, ge=1, le=100)
+    replay_default_speed: float = Field(default=1.0, gt=0, le=100)
+    replay_max_speed: float = Field(default=10.0, gt=0, le=100)
+    replay_default_batch_size: int = Field(default=1, ge=1, le=100)
     nlp_entity_aliases_path: str = "data/entity_aliases.json"
     research_reports_dir: str = "research/reports"
     research_market_data_dir: str = "research/market_data"

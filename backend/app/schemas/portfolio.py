@@ -13,6 +13,9 @@ class CorporateLoanParameters(BaseModel):
 
     basis: Literal["exposure"]
     borrower_group_id: str = Field(min_length=1, max_length=128)
+    borrower: str | None = Field(default=None, max_length=255)
+    issuer: str | None = Field(default=None, max_length=255)
+    ticker: str | None = Field(default=None, max_length=32)
     sector: str = Field(min_length=1, max_length=128)
     pd: Decimal = Field(ge=ZERO, le=ONE)
     lgd: Decimal = Field(ge=ZERO, le=ONE)
@@ -43,6 +46,8 @@ class CorporateBondParameters(BaseModel):
 
     basis: Literal["market_value"]
     issuer: str = Field(min_length=1, max_length=255)
+    borrower: str | None = Field(default=None, max_length=255)
+    ticker: str | None = Field(default=None, max_length=32)
     sector: str = Field(min_length=1, max_length=128)
     credit_rating: str = Field(min_length=1, max_length=16)
     modified_duration: Decimal = Field(ge=ZERO)

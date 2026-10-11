@@ -34,6 +34,30 @@ class SocialCsvAdapter:
     def configured(self) -> bool:
         return self.path.is_file()
 
+    def count_records(self) -> int:
+        """Count data rows once when a replay starts; status reads use the stored value."""
+        if not self.configured:
+            raise ProviderNotConfiguredError(
+                f"social CSV not found; place the Kaggle export at {self.settings.social_csv_path}"
+            )
+        try:
+            with self.path.open("r", encoding="utf-8-sig", newline="") as csv_file:
+                reader = csv.DictReader(csv_file)
+                field_map = {
+                    field.strip().casefold(): field
+                    for field in (reader.fieldnames or [])
+                    if isinstance(field, str) and field.strip()
+                }
+                if self._find_column(field_map, self.text_columns) is None:
+                    raise ProviderResponseError(
+                        "social CSV must contain one of: Tweet, Text, Content, Message, or Body"
+                    )
+                return sum(1 for _ in reader)
+        except ProviderResponseError:
+            raise
+        except (OSError, csv.Error) as exc:
+            raise ProviderResponseError("social CSV could not be read") from exc
+
     def fetch(self, limit: int, offset: int = 0) -> list[Mapping[str, object]]:
         if not self.configured:
             raise ProviderNotConfiguredError(

@@ -113,10 +113,10 @@ def test_demo_fixtures_are_repeatable_and_marked_as_demo(db_session):
 
     first, second = service.run(["demo", "demo"], limit=100)
 
-    assert first.inserted == 4
-    assert second.duplicates_skipped == 4
+    assert first.inserted == 6
+    assert second.duplicates_skipped == 6
     articles = db_session.scalars(select(Article).order_by(Article.id)).all()
-    assert len(articles) == 4
+    assert len(articles) == 6
     assert all(article.is_demo for article in articles)
     assert {article.source for article in articles} == {"news", "reddit"}
     assert db_session.scalar(select(func.count(IngestionRun.id))) == 2

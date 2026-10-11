@@ -65,9 +65,9 @@ def test_demo_endpoint_loads_fixtures_and_is_idempotent(client):
     second = client.post("/ingestion/demo")
 
     assert first.status_code == 200
-    assert first.json()["inserted"] == 4
+    assert first.json()["inserted"] == 6
     assert second.status_code == 200
-    assert second.json()["duplicates_skipped"] == 4
+    assert second.json()["duplicates_skipped"] == 6
 
 
 def test_live_ingestion_without_credentials_is_gracefully_disabled(client):

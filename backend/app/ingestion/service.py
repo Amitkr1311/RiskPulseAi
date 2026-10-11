@@ -2,6 +2,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from collections.abc import Mapping
 from typing import Callable
 
 from sqlalchemy import select
@@ -27,6 +28,7 @@ class SourceRunResult:
     duplicates_skipped: int
     failed: int
     error_category: str | None
+    inserted_article_ids: tuple[int, ...] = ()
 
 
 class IngestionService:
@@ -48,10 +50,7 @@ class IngestionService:
 
     def run_source(self, source: str, limit: int, offset: int = 0) -> SourceRunResult:
         adapter = self.adapters.get(source)
-        run = IngestionRun(source=source, status="running", started_at=datetime.now(UTC))
-        self.db.add(run)
-        self.db.flush()
-        self.db.commit()
+        run = self._start_run(source)
 
         logger.info(
             "Ingestion started",
@@ -72,15 +71,47 @@ class IngestionService:
             status = "disabled" if exc.category == "not_configured" else "failed"
             return self._complete_run(run.id, status=status, error_category=exc.category, message=str(exc))
 
+        return self._persist_records(run.id, source, adapter, records)
+
+    def run_records(self, source: str, records: list[Mapping[str, object]]) -> SourceRunResult:
+        """Persist adapter-fetched records through the normal dedupe/normalization flow."""
+        adapter = self.adapters.get(source)
+        run = self._start_run(source)
+        if adapter is None:
+            return self._complete_run(
+                run.id,
+                status="failed",
+                error_category="unknown_source",
+                message="configured source adapter is unavailable",
+            )
+        return self._persist_records(run.id, source, adapter, records)
+
+    def _start_run(self, source: str) -> IngestionRun:
+        run = IngestionRun(source=source, status="running", started_at=datetime.now(UTC))
+        self.db.add(run)
+        self.db.flush()
+        self.db.commit()
+        return run
+
+    def _persist_records(
+        self,
+        run_id: int,
+        source: str,
+        adapter: SourceAdapter,
+        records: list[Mapping[str, object]],
+    ) -> SourceRunResult:
         inserted = 0
         duplicates_skipped = 0
         failed = 0
         error_category: str | None = None
+        inserted_article_ids: list[int] = []
         for record in records:
             try:
                 normalized = adapter.normalize(record)
-                if self._insert_if_new(normalized):
+                article = self._insert_if_new(normalized)
+                if article is not None:
                     inserted += 1
+                    inserted_article_ids.append(article.id)
                 else:
                     duplicates_skipped += 1
             except ProviderValidationError as exc:
@@ -91,12 +122,12 @@ class IngestionService:
                 error_category = "validation"
                 logger.warning(
                     "Record validation failed",
-                    extra={"source": source, "ingestion_run_id": run.id, "error_category": error_category},
+                    extra={"source": source, "ingestion_run_id": run_id, "error_category": error_category},
                 )
             except SQLAlchemyError:
                 self.db.rollback()
                 return self._complete_run(
-                    run.id,
+                    run_id,
                     status="failed",
                     fetched=len(records),
                     inserted=inserted,
@@ -107,13 +138,14 @@ class IngestionService:
                 )
 
         return self._complete_run(
-            run.id,
+            run_id,
             status="completed" if failed == 0 else "completed_with_errors",
             fetched=len(records),
             inserted=inserted,
             duplicates_skipped=duplicates_skipped,
             failed=failed,
             error_category=error_category,
+            inserted_article_ids=tuple(inserted_article_ids),
         )
 
     def _fetch_with_retries(self, adapter: SourceAdapter, limit: int, run_id: int, offset: int) -> list[dict[str, object]]:
@@ -136,14 +168,14 @@ class IngestionService:
                 self.sleep(delay)
         raise RuntimeError("retry loop exited unexpectedly")
 
-    def _insert_if_new(self, normalized: NormalizedArticle) -> bool:
+    def _insert_if_new(self, normalized: NormalizedArticle) -> Article | None:
         duplicate_query = select(Article.id).where(Article.source == normalized.source)
         if normalized.external_id:
             duplicate_query = duplicate_query.where(Article.external_id == normalized.external_id)
         else:
             duplicate_query = duplicate_query.where(Article.content_hash == normalized.content_hash)
         if self.db.scalar(duplicate_query.limit(1)) is not None:
-            return False
+            return None
 
         article = Article(**normalized.model_dump())
         try:
@@ -151,8 +183,8 @@ class IngestionService:
                 self.db.add(article)
                 self.db.flush()
         except IntegrityError:
-            return False
-        return True
+            return None
+        return article
 
     def _complete_run(
         self,
@@ -165,6 +197,7 @@ class IngestionService:
         failed: int = 0,
         error_category: str | None = None,
         message: str | None = None,
+        inserted_article_ids: tuple[int, ...] = (),
     ) -> SourceRunResult:
         run = self.db.get(IngestionRun, run_id)
         if run is None:
@@ -200,4 +233,5 @@ class IngestionService:
             duplicates_skipped=run.duplicates_skipped,
             failed=run.records_failed,
             error_category=run.error_category,
+            inserted_article_ids=inserted_article_ids,
         )

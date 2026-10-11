@@ -44,7 +44,7 @@ All rate, return, spread, PD, LGD, recovery, duration, beta, and derivative sens
 
 ## Scenario templates
 
-The demo portfolio contains two interest-rate swaps and two FX forwards alongside loans, bonds, and equities. Five deterministic, validated templates are defined in `backend/app/portfolio/scenarios.py`: geopolitical, macroeconomic/rate, credit event, regulatory, and market crash. The stress engine applies the simplified derivative shocks to every included derivative position.
+The demo portfolio contains two interest-rate swaps and two FX forwards alongside loans, bonds, and equities. It also contains named Tesla, Apple, Microsoft, and HDFC Bank loan, bond, and equity exposures. Their issuer, borrower, sector, and ticker fields are deliberately explicit so a signal entity can be matched to the relevant positions. Five deterministic, validated templates are defined in `backend/app/portfolio/scenarios.py`: geopolitical, macroeconomic/rate, credit event, regulatory, and market crash. The stress engine applies the simplified derivative shocks to every included derivative position.
 
 ## API
 

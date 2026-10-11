@@ -16,7 +16,7 @@ def test_demo_seed_is_exact_and_idempotent(db_session) -> None:
     db_session.commit()
 
     portfolio = db_session.query(Portfolio).one()
-    assert len(portfolio.positions) == 8
+    assert len(portfolio.positions) == 20
     assert sum(position.market_value for position in portfolio.positions) == Decimal("1000000000.00")
     assert {position.asset_type for position in portfolio.positions} == {
         "corporate_loan",
@@ -71,7 +71,7 @@ def test_demo_seed_replaces_the_legacy_single_derivative_book(db_session) -> Non
     seed_demo_portfolio(db_session)
     db_session.commit()
 
-    assert db_session.query(PortfolioPosition).filter_by(portfolio_id=portfolio.id).count() == 8
+    assert db_session.query(PortfolioPosition).filter_by(portfolio_id=portfolio.id).count() == 20
     assert db_session.query(PortfolioPosition).filter_by(position_key="derivatives").count() == 0
 
 
@@ -219,14 +219,14 @@ def test_portfolio_endpoints_return_explicit_units_and_filters(client, db_sessio
     portfolio = portfolio_response.json()
     assert portfolio["total_market_value_inr"] == "1000000000.00"
     assert portfolio["total_market_value_crore"] == "100.00"
-    assert portfolio["position_count"] == 8
+    assert portfolio["position_count"] == 20
     assert portfolio["is_demo"] is True
 
-    positions_response = client.get("/portfolio/positions?asset_class=equity&limit=1")
+    positions_response = client.get("/portfolio/positions?asset_class=equity&limit=100")
     assert positions_response.status_code == 200
     body = positions_response.json()
-    assert body["total"] == 1
-    assert body["items"][0]["market_value_inr"] == "100000000.00"
+    assert body["total"] == 5
+    assert sum(Decimal(item["market_value_inr"]) for item in body["items"]) == Decimal("100000000.00")
     position_id = body["items"][0]["id"]
 
     detail_response = client.get(f"/portfolio/positions/{position_id}")

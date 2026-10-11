@@ -93,6 +93,17 @@ class NLPService:
             results=results,
         )
 
+    def process_articles(self, article_ids: tuple[int, ...]) -> BatchResult:
+        """Process exactly the articles inserted by one ingestion batch."""
+        results = tuple(self.process_article(article_id) for article_id in article_ids)
+        return BatchResult(
+            requested=len(article_ids),
+            processed=sum(result.status == "processed" for result in results),
+            skipped=sum(result.status == "skipped" for result in results),
+            failed=sum(result.status == "failed" for result in results),
+            results=results,
+        )
+
     def process_article(self, article_id: int) -> ProcessingResult:
         article = self.db.get(Article, article_id)
         if article is None:
@@ -140,6 +151,7 @@ class NLPService:
 
         entity_payloads: list[dict[str, object]] = []
         primary_entity: Entity | None = None
+        linked_entity_ids: set[int] = set()
         for mention in analysis.entities:
             entity = self.db.scalar(select(Entity).where(Entity.canonical_name == mention.canonical_name))
             if entity is None:
@@ -153,14 +165,16 @@ class NLPService:
                 self.db.flush()
             elif mention.mention not in (entity.aliases or []):
                 entity.aliases = [*(entity.aliases or []), mention.mention]
-            self.db.add(
-                ArticleEntity(
-                    article_id=article_id,
-                    entity_id=entity.id,
-                    raw_mention=mention.mention,
-                    extraction_confidence=mention.extraction_confidence,
+            if entity.id not in linked_entity_ids:
+                self.db.add(
+                    ArticleEntity(
+                        article_id=article_id,
+                        entity_id=entity.id,
+                        raw_mention=mention.mention,
+                        extraction_confidence=mention.extraction_confidence,
+                    )
                 )
-            )
+                linked_entity_ids.add(entity.id)
             primary_entity = primary_entity or entity
             entity_payloads.append(
                 {

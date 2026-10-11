@@ -34,6 +34,8 @@ npm install
 npm run dev
 ```
 
+If `INGESTION_API_KEY` is set in the backend/root `.env`, the local Next.js replay proxy reads it server-side. In another environment, set the same server-only variable in the frontend runtime as `INGESTION_API_KEY=...` (without the `NEXT_PUBLIC_` prefix). The key is never sent to the browser. Leave it blank for an unprotected local demo.
+
 ## Local datasets and import commands
 
 The local transaction export is `data/transactions.csv` (806 rows with `Date`, `Description`, `Amount`, `Transaction Type`, `Category`, and `Account Name`). The local historical social export is `backend/data/tweets-vs-stock.csv` (80,793 rows with `Date`, `Tweet`, `Stock Name`, and `Company Name`). These files are user-supplied downloads and are not redistributed by the project. No license or attribution metadata is included beside the CSVs in this repository; retain the original provider attribution and verify its terms before sharing them.
@@ -47,7 +49,7 @@ alembic upgrade head
 python -m app.db.seed
 ```
 
-The builder validates dates and amounts, removes exact duplicate rows, uses debit transactions to derive recurring and sector proxies, and writes eight clearly labelled synthetic positions to `backend/data/portfolio_seed.json`. It preserves the specification's ₹100 crore total and keeps derivative notional separate from marked-to-market value. Consumer transactions are not treated as proof of actual loans, bonds, equities, or derivatives.
+The builder validates dates and amounts, removes exact duplicate rows, uses debit transactions to derive recurring and sector proxies, and writes clearly labelled synthetic positions to `backend/data/portfolio_seed.json`. The demo seed preserves the specification's ₹100 crore total, keeps derivative notional separate from marked-to-market value, and includes named Tesla, Apple, Microsoft, and HDFC Bank loan, bond, and equity exposures for signal-to-portfolio demonstrations. Consumer transactions are not treated as proof of actual loans, bonds, equities, or derivatives.
 
 Replay the historical social file through the shared article and NLP pipeline:
 
@@ -60,6 +62,25 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8000/nlp/process-pending -C
 The ingestion endpoint is bounded to 100 records per request. For the full replay, repeat the social request with `offset` values `0`, `100`, `200`, and so on; the adapter reads deterministic CSV slices and the shared flow deduplicates safely.
 
 Social records are stored as `source="social"`, marked as historical replay data, and retain the CSV timestamp, tweet text, stock symbol, and company attribution. They are not a live social feed and the CSV does not supply stock-return labels used by the risk engine. Repeat ingestion is deduplicated by source identifier when available or normalized content hash.
+
+### Historical social replay controls
+
+The News page includes a bounded replay worker for the same CSV. It processes one small batch at a time through the social adapter, article deduplication, NLP scoring, risk-signal persistence, and the existing automatic stress-test trigger. Replay state and the cursor are stored in PostgreSQL, so a backend restart preserves progress and marks an interrupted worker as stopped. Reset moves the cursor to the beginning without deleting articles or signals.
+
+The controls call these endpoints:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/start -ContentType application/json -Body '{"speed_records_per_second":1,"batch_size":1}'
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/pause
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/resume
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/stop
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/replay/reset
+Invoke-RestMethod http://localhost:8000/replay/status
+```
+
+Supported UI speeds are 1, 5, and 10 records per second; the backend enforces a maximum configured by `REPLAY_MAX_SPEED` (10 by default). `start` resumes a stopped/error replay from its saved position. Starting a completed replay begins a new pass but keeps previously persisted data, so those rows are counted as duplicates. `resume` is only for a paused replay, and `reset` is rejected while a worker is active. The frontend uses two-second bounded polling for status and refreshes the news feed as the cursor advances; no fake live indicator is shown.
+
+Replayed articles retain the original historical `published_at` timestamp and a separate database `ingested_at` timestamp. If the CSV is missing, empty, malformed, or NLP fails, the status panel reports the error and the saved cursor remains available for retry. Historical replay cannot reproduce a live social API's delivery order, deleted posts, engagement data, or market-return labels.
 
 To enable optional live RSS/Reddit polling, set `NEWS_RSS_URL` and the `INGESTION_LIVE_*` variables in `.env`. Reddit additionally requires `REDDIT_INGESTION_ENABLED=true` and a valid OAuth access token. Restart the backend after changing environment variables. The frontend automatically refreshes live-feed status, recent articles, NLP status, and signals every 15 seconds. Provider credentials remain backend-only. See [`docs/api.md`](docs/api.md#live-rss-and-reddit-integration).
 
@@ -77,6 +98,8 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8000/nlp/process-pending -C
 Invoke-RestMethod http://localhost:8000/signals
 ```
 
+The demo fixture includes two named-company articles. After the NLP command, their impact scores exceed 7 and automatically create targeted credit or regulatory stress runs. Open the Stress Testing page and inspect the newest automatic run to see the triggering article and the matched named positions.
+
 The same processing is available from the backend with `python -m app.nlp.process --limit 25`. See [`docs/nlp.md`](docs/nlp.md) for the pipeline, FinBERT setup, scoring formula, taxonomy, and limitations.
 
 For the optional FinBERT demo, install `backend/requirements-finbert.txt`, then set `NLP_SENTIMENT_BACKEND=finbert` and `NLP_ALLOW_MODEL_DOWNLOAD=true` before processing. Tests and normal demo runs keep the safe heuristic default. The supplied three-row PhraseBank smoke fixture scores accuracy `1.0000` and macro-F1 `1.0000`; these numbers are not full-dataset benchmark results. See [`docs/research.md`](docs/research.md) for the full evaluation command.
@@ -86,6 +109,7 @@ For the optional FinBERT demo, install `backend/requirements-finbert.txt`, then 
 - `GET /health`
 - `GET /articles`, `GET /articles/{article_id}`
 - `POST /ingestion/run`, `POST /ingestion/demo`, `GET /ingestion/status`
+- `GET /replay/status`, `POST /replay/start`, `POST /replay/pause`, `POST /replay/resume`, `POST /replay/stop`, `POST /replay/reset`
 - `GET /nlp/status`, `POST /nlp/process-pending`, `POST /nlp/process/{article_id}`
 - `GET /signals`, `GET /signals/latest`, `GET /signals/{signal_id}`
 - `GET /signals/taxonomy`

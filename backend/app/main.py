@@ -18,6 +18,7 @@ from app.api.dashboard import router as dashboard_router
 from app.api.portfolio import router as portfolio_router
 from app.api.stress_testing import router as stress_testing_router
 from app.api.research import router as research_router
+from app.api.replay import replay_manager, router as replay_router
 from app.ingestion.scheduler import LiveIngestionScheduler
 from app.schemas.health import DependencyHealth, HealthResponse
 
@@ -28,6 +29,7 @@ settings = get_settings()
 async def lifespan(_app: FastAPI):
     stop_event = asyncio.Event()
     task = None
+    replay_manager.recover_after_restart()
     if settings.ingestion_live_enabled:
         task = asyncio.create_task(LiveIngestionScheduler(settings).run(stop_event))
     try:
@@ -36,6 +38,7 @@ async def lifespan(_app: FastAPI):
         if task is not None:
             stop_event.set()
             await task
+        await asyncio.to_thread(replay_manager.shutdown)
 
 
 app = FastAPI(
@@ -59,6 +62,7 @@ app.include_router(dashboard_router)
 app.include_router(portfolio_router)
 app.include_router(stress_testing_router)
 app.include_router(research_router)
+app.include_router(replay_router)
 
 
 @app.exception_handler(SQLAlchemyError)

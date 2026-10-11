@@ -85,6 +85,23 @@ Portfolio money fields are explicit: `market_value_inr` is canonical and `market
 
 ## Live RSS, social replay, and Reddit integration
 
+## Historical social replay
+
+The social CSV can be replayed incrementally through the normal ingestion and NLP pipeline. `GET /replay/status` returns the persisted cursor and counters without rescanning the CSV. State-changing replay endpoints use the same optional `X-Ingestion-Key` guard as ingestion:
+
+```text
+POST /replay/start   {"speed_records_per_second": 1, "batch_size": 1}
+POST /replay/pause
+POST /replay/resume
+POST /replay/stop
+POST /replay/reset
+GET  /replay/status
+```
+
+The worker is single-instance per backend process, uses a bounded batch, and sleeps in a background thread rather than blocking FastAPI's event loop. `start` is idempotent while running, resumes a stopped/error cursor, and starts a new pass after completion. `pause`, `resume`, `stop`, and `reset` reject invalid transitions with HTTP 409. Reset never deletes persisted records. A backend restart changes a running replay to `stopped` at its last saved cursor; call `start` to continue.
+
+Each batch uses `SocialCsvAdapter.fetch`, `IngestionService.run_records`, and `NLPService.process_articles`. Only newly inserted articles are sent immediately to NLP; duplicates do not create duplicate signals. Qualifying persisted signals use the existing strict `impact_score > stress_trigger_threshold` automatic stress-test path.
+
 ## Social CSV replay
 
 The `social` adapter replays a downloaded Tweet Sentiment's Impact on Stock Returns CSV through the same normalization, content-hash deduplication, and article persistence flow as RSS. Put the CSV at `backend/data/tweets-vs-stock.csv`, or set `SOCIAL_CSV_PATH` to another path. The actual export uses `Date`, `Tweet`, `Stock Name`, and `Company Name`; common `Tweet`/`Text` content columns and optional ID, date, URL, title, stock, and company columns are supported. Imported rows are marked as historical replay data and retain stock/company attribution in `source_metadata`. `/ingestion/status` always reports `news`, `social`, and optional `reddit` separately.

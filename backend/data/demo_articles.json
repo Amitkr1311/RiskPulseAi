@@ -34,5 +34,23 @@
     "url": "https://example.invalid/riskpulse/demo-social-geopolitical-001",
     "published_at": "2026-01-18T10:00:00Z",
     "is_demo": true
+  },
+  {
+    "source": "news",
+    "external_id": "demo-named-credit-001",
+    "title": "Tesla and Apple face a credit downgrade after missed payment",
+    "text": "Tesla and Apple face a credit downgrade after a missed payment and debt restructuring. The negative development creates losses and material risk for lenders and investors.",
+    "url": "https://example.invalid/riskpulse/demo-named-credit-001",
+    "published_at": "2026-01-19T09:00:00Z",
+    "is_demo": true
+  },
+  {
+    "source": "news",
+    "external_id": "demo-named-regulatory-001",
+    "title": "Microsoft and HDFC Bank face a regulatory investigation",
+    "text": "Microsoft and HDFC Bank face a regulatory investigation and compliance fine. The negative risk event could pressure the named corporate exposures.",
+    "url": "https://example.invalid/riskpulse/demo-named-regulatory-001",
+    "published_at": "2026-01-20T09:00:00Z",
+    "is_demo": true
   }
 ]

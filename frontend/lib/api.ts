@@ -160,6 +160,27 @@ export type IngestionStatus = {
   poll_interval_seconds: number;
 };
 
+export type ReplayStatus = "idle" | "running" | "paused" | "completed" | "stopped" | "error";
+
+export type SocialReplayStatus = {
+  dataset: string;
+  configured: boolean;
+  status: ReplayStatus;
+  total_records: number;
+  records_attempted: number;
+  records_inserted: number;
+  duplicates_skipped: number;
+  records_failed: number;
+  current_position: number;
+  speed_records_per_second: number;
+  batch_size: number;
+  progress_percentage: number;
+  started_at: string | null;
+  last_record_at: string | null;
+  completed_at: string | null;
+  last_error: string | null;
+};
+
 export type NlpStatus = {
   sentiment_backend: string;
   sentiment_model_id: string;
@@ -304,7 +325,8 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, { cache: "no-store", ...init });
+  const target = path.startsWith("/api/") ? path : `${apiUrl}${path}`;
+  const response = await fetch(target, { cache: "no-store", ...init });
   if (!response.ok) {
     let detail = `Request failed with HTTP ${response.status}`;
     try {
@@ -331,6 +353,13 @@ export const api = {
   getHealth: () => request<HealthStatus>("/health"),
   getDashboardSummary: () => request<DashboardSummary>("/dashboard/summary"),
   getIngestionStatus: () => request<IngestionStatus>("/ingestion/status"),
+  getReplayStatus: () => request<SocialReplayStatus>("/replay/status"),
+  startReplay: (body: { speed_records_per_second: number; batch_size: number }) =>
+    request<SocialReplayStatus>("/api/replay/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+  pauseReplay: () => request<SocialReplayStatus>("/api/replay/pause", { method: "POST" }),
+  resumeReplay: () => request<SocialReplayStatus>("/api/replay/resume", { method: "POST" }),
+  stopReplay: () => request<SocialReplayStatus>("/api/replay/stop", { method: "POST" }),
+  resetReplay: () => request<SocialReplayStatus>("/api/replay/reset", { method: "POST" }),
   getNlpStatus: () => request<NlpStatus>("/nlp/status"),
   getArticles: (params: Record<string, string | number | undefined> = {}) =>
     request<Page<Article>>(`/articles${query(params)}`),

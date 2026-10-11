@@ -235,3 +235,24 @@ class IngestionRun(Base):
     error_message: Mapped[str | None] = mapped_column(Text)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class SocialReplayState(Base):
+    __tablename__ = "social_replay_state"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    dataset_path: Mapped[str] = mapped_column(String(1000), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="idle", index=True)
+    total_records: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    records_attempted: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    records_inserted: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    duplicates_skipped: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    records_failed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    current_position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    speed_records_per_second: Mapped[Decimal] = mapped_column(Numeric(8, 3), nullable=False, default=1)
+    batch_size: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_record_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(String(500))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

@@ -47,6 +47,11 @@ export default function StressTestingPage() {
 
   const topLossIds = useMemo(() => new Set(topLosses.map((result) => result.result_id)), [topLosses]);
 
+  const matchedPositions = useMemo(
+    () => detail?.results.filter((result) => result.inclusion_status === "included") ?? [],
+    [detail],
+  );
+
   async function load() {
     setLoading(true);
     try {
@@ -144,6 +149,17 @@ export default function StressTestingPage() {
         </div>
         <p className="section-copy">Reconciliation: {detail.reconciliation.reconciled ? "passed" : "failed"} / position P&amp;L sum {formatInr(detail.reconciliation.position_pnl_sum)} / difference {formatInr(detail.reconciliation.difference)}</p>
         {detail.trigger_signal && <p className="section-copy">Triggering article #{detail.trigger_signal.id}: <a className="inline-link" href={detail.trigger_signal.article_url ?? `/news?search=${encodeURIComponent(detail.trigger_signal.article_title)}`}>{detail.trigger_signal.article_title}</a></p>}
+        <div className="section-copy" style={{ marginTop: 18 }}>
+          <strong>Matched positions ({matchedPositions.length})</strong>
+          <div className="matched-position-list">
+            {matchedPositions.length ? matchedPositions.map((result) => (
+              <span className="matched-position" key={result.result_id}>
+                {result.position_name ?? result.position_key}
+                {Array.isArray(result.calculation_details.matched_terms) && result.calculation_details.matched_terms.length ? ` · ${result.calculation_details.matched_terms.join(", ")}` : ""}
+              </span>
+            )) : <span className="muted">No positions matched this signal.</span>}
+          </div>
+        </div>
         <div style={{ display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1.35fr) minmax(280px, .65fr)", margin: "25px 0" }}>
           <section style={{ border: "1px solid var(--ink-12)", padding: 18 }}><div className="section-kicker">Before / after</div><h3>Value by asset class</h3><div style={{ height: 320, marginTop: 12 }}><ResponsiveContainer height={320} width="100%"><BarChart data={assetClassChartData} margin={{ top: 12, right: 12, left: 12, bottom: 8 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(17,24,39,.12)" /><XAxis dataKey="assetClass" tick={{ fill: "#111827", fontSize: 11 }} /><YAxis tick={{ fill: "#6b7280", fontSize: 10 }} tickFormatter={(value: number) => `${Math.round(value / 10000000)}cr`} /><Tooltip formatter={(value: number) => formatInr(String(value))} /><Legend /><Bar dataKey="before" fill="#94a3b8" name="Before" /><Bar dataKey="after" fill="#0d9488" name="After" /></BarChart></ResponsiveContainer></div></section>
           <section style={{ border: "1px solid var(--ink-12)", padding: 18 }}><div className="section-kicker">Largest losses</div><h3>Top 5 positions</h3>{topLosses.length ? <div style={{ marginTop: 14 }}>{topLosses.map((result, index) => <div key={result.result_id} style={{ alignItems: "center", borderBottom: "1px solid var(--ink-08)", display: "grid", gap: 10, gridTemplateColumns: "24px 1fr auto", padding: "12px 0" }}><span style={{ alignItems: "center", background: "var(--teal-08)", color: "var(--teal)", display: "inline-flex", fontSize: ".7rem", fontWeight: 750, height: 22, justifyContent: "center", width: 22 }}>{index + 1}</span><div><strong>{result.position_name ?? result.position_key}</strong><span className="cell-subtext">{titleCase(result.asset_type ?? "")}</span></div><strong className="negative-value">{formatInr(result.contribution)}</strong></div>)}</div> : <p className="section-copy">No position-level losses were recorded.</p>}</section>

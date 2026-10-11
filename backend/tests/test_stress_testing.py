@@ -108,7 +108,7 @@ def test_broad_market_run_is_deterministic_and_reconciles(db_session) -> None:
     assert first.portfolio_value_before == Decimal("1000000000.00")
     assert first.pnl == Decimal("-39168750.00")
     assert first.reconciliation.reconciled is True
-    assert len(first.results) == 8
+    assert len(first.results) == 20
 
 
 def test_high_impact_persisted_signal_automatically_runs_matching_scenario(db_session) -> None:
@@ -133,6 +133,46 @@ def test_high_impact_persisted_signal_automatically_runs_matching_scenario(db_se
     assert run.trigger_mode == "automatic"
     assert run.triggered_by_signal_id == result.signal_id
     assert run.trigger_signal_id == result.signal_id
+
+
+def test_named_high_impact_articles_trigger_targeted_runs_and_include_matching_positions(db_session) -> None:
+    portfolio = seed_demo_portfolio(db_session)
+    seed_scenarios(db_session)
+    article = Article(
+        source="news",
+        title="Tesla and Apple face a credit downgrade after missed payment",
+        text="Tesla and Apple face a credit downgrade after a missed payment and debt restructuring. The negative development creates losses and material risk.",
+        content_hash="named-credit-demo",
+        is_demo=True,
+        processing_status="pending",
+    )
+    db_session.add(article)
+    db_session.commit()
+
+    result = NLPService(db_session, Settings()).process_article(article.id)
+
+    assert result.status == "processed"
+    signal = db_session.get(RiskSignal, result.signal_id)
+    assert signal is not None
+    assert signal.impact_score > 7
+    assert signal.event_type == "credit_event"
+    run = db_session.query(StressTestRun).one()
+    assert run.portfolio_id == portfolio.id
+    assert run.triggered_by_signal_id == signal.id
+    assert run.trigger_mode == "automatic"
+    matched = {
+        item.position_key_snapshot
+        for item in run.results
+        if item.inclusion_status == "included"
+    }
+    assert matched == {
+        "tesla_corporate_loan",
+        "tesla_corporate_bond",
+        "tesla_equity",
+        "apple_corporate_loan",
+        "apple_corporate_bond",
+        "apple_equity",
+    }
 
 
 def test_auto_trigger_uses_strictly_greater_than_threshold(db_session) -> None:

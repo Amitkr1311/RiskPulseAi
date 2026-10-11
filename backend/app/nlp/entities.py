@@ -7,9 +7,9 @@ from app.nlp.events import ENTITY_TYPES
 
 
 DEFAULT_ENTITY_ALIASES = [
-    {"canonical_name": "Apple", "aliases": ["Apple", "Apple Inc"], "entity_type": "organization"},
-    {"canonical_name": "Microsoft", "aliases": ["Microsoft", "Microsoft Corporation"], "entity_type": "organization"},
-    {"canonical_name": "Tesla", "aliases": ["Tesla", "Tesla Inc"], "entity_type": "organization"},
+    {"canonical_name": "Apple", "aliases": ["Apple", "Apple Inc", "AAPL", "$AAPL"], "entity_type": "organization"},
+    {"canonical_name": "Microsoft", "aliases": ["Microsoft", "Microsoft Corporation", "MSFT", "$MSFT"], "entity_type": "organization"},
+    {"canonical_name": "Tesla", "aliases": ["Tesla", "Tesla Inc", "TSLA", "$TSLA"], "entity_type": "organization"},
     {
         "canonical_name": "Reserve Bank of India",
         "aliases": ["RBI", "Reserve Bank of India"],
@@ -20,7 +20,7 @@ DEFAULT_ENTITY_ALIASES = [
     {"canonical_name": "JPMorgan Chase", "aliases": ["JPMorgan", "JPMorgan Chase", "JP Morgan"], "entity_type": "organization"},
     {"canonical_name": "Goldman Sachs", "aliases": ["Goldman Sachs", "Goldman"], "entity_type": "organization"},
     {"canonical_name": "State Bank of India", "aliases": ["State Bank of India", "SBI"], "entity_type": "organization"},
-    {"canonical_name": "HDFC Bank", "aliases": ["HDFC Bank", "HDFC"], "entity_type": "organization"},
+    {"canonical_name": "HDFC Bank", "aliases": ["HDFC Bank", "HDFC", "HDFCBANK", "HDFCBANK.NS"], "entity_type": "organization"},
     {"canonical_name": "ICICI Bank", "aliases": ["ICICI Bank", "ICICI"], "entity_type": "organization"},
     {"canonical_name": "European Central Bank", "aliases": ["European Central Bank", "ECB"], "entity_type": "central_bank"},
     {"canonical_name": "Bank of England", "aliases": ["Bank of England", "BoE"], "entity_type": "central_bank"},

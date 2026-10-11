@@ -64,6 +64,12 @@ def test_entities_cover_financial_institutions_markets_and_assets() -> None:
     assert all(entity.resolved for entity in entities)
 
 
+def test_named_corporate_ticker_aliases_resolve_to_issuers() -> None:
+    entities = AliasEntityExtractor().extract("$TSLA AAPL MSFT HDFCBANK")
+    assert [entity.canonical_name for entity in entities] == ["Tesla", "Apple", "Microsoft", "HDFC Bank"]
+    assert all(entity.resolved for entity in entities)
+
+
 def test_event_categories_and_fallback_are_deterministic() -> None:
     classifier = RuleBasedEventClassifier()
     assert classifier.classify("The central bank changed interest rate policy").event_type == "macroeconomic"
