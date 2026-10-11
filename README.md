@@ -4,7 +4,7 @@
 **College Email ID:** cs23b1004@iiitr.ac.in<br>
 **College / Campus:** Indian Institute of Information Technology Raichur (IIIT Raichur)<br>
 **Demo Video Link:** [Add unlisted YouTube link]<br>
-**Slide Deck Link:** [Presentation PDF](docs/presentation.pdf) or https://www.dropbox.com/scl/fi/b7u712zdrxvzcdi3hpclt/presentation.pdf?rlkey=mgr5iwf0tsxh2vnmtj78s3lpp&st=gon10b9g&dl=0 <br>
+**Slide Deck Link:** [Presentation PDF](https://www.dropbox.com/scl/fi/xbrcdkxjiz361ggco2djz/Amit_Kumar_IIITR_Presentation.pdf?rlkey=ezu5ntjujtpfjewinfzv2q8ne&st=0lzmntdi&dl=0) <br>
 
 RiskPulse AI is a financial risk intelligence and portfolio stress-testing prototype. It converts financial news and historical social posts into traceable risk signals, maps those signals to a synthetic portfolio, and runs deterministic scenario analysis when a signal is material.
 
